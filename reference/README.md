@@ -16,7 +16,7 @@ timing**, and it demonstrates a **second renderer** behind the same script-to-fr
 
 | File | What |
 |---|---|
-| `molasses_short.mp4` | 720×1280, 24 fps, 56.6 s, H.264 + AAC, 7.8 MB |
+| `molasses_short.mp4` | 720×1280, 24 fps, 56.6 s, H.264 + AAC, 2.7 MB (CRF 30 copy; the master render is 7.8 MB at CRF 18) |
 | `explainer.html` | Self-contained interactive page: chapter cards that seek, key numbers, a viscosity slider |
 | `molasses_script_sources.md` | Narration line by line, every fact with its source, build notes |
 
