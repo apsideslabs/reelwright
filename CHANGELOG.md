@@ -2,6 +2,16 @@
 
 All notable changes to Reelwright. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning is [SemVer](https://semver.org/).
 
+## [1.3.0] — 2026-11-03
+
+### Added
+- **`style: "toon"`** — cel shading (`MeshToonMaterial` with a four-step ramp) plus an inverted-hull ink outline via three.js `OutlineEffect`. One flag switches the whole scene from lit to cartoon.
+- **`fx` cues** — screen-space cartoon effects (`impact`, `sparkle`) anchored to a line or beat.
+- `docs/styles.md` — how toon mode works, how to tune it, and why Lottie/Rive/GSAP are deliberately not used.
+
+### Changed
+- `kit/lib/jsm/effects/OutlineEffect.js` vendored (three.js r169, MIT).
+
 ## [1.2.0] — 2026-11-03
 
 ### Added
