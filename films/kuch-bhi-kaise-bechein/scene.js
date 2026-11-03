@@ -62,6 +62,29 @@ function roundRect(g, x, y, w, h, r) {
 // pass — the flat-colour-plus-ink look most animated shorts are built from.
 const STYLE = FILM.style || 'real';
 
+// Safe area. TikTok, Reels and Shorts all paint captions, usernames and a button
+// column over a vertical video. The strictest union on a 1080x1920 frame is
+// 290 px top, 680 px bottom, 120 px left, 200 px right — so anything that must be
+// READ has to live inside x 120-880, y 290-1240. Backgrounds may run to the edge;
+// words may not.
+const SAFE_PRESETS = {
+  all:      { top: 290, bottom: 680, left: 120, right: 200 },
+  shorts:   { top: 288, bottom: 672, left: 60, right: 192 },
+  reels:    { top: 269, bottom: 672, left: 65, right: 65 },
+  tiktok:   { top: 240, bottom: 660, left: 120, right: 120 },
+  none:     { top: 0, bottom: 0, left: 0, right: 0 }
+};
+const SAFE_NAME = FILM.safeArea || 'all';
+const _sp = SAFE_PRESETS[SAFE_NAME] || SAFE_PRESETS.all;
+const K = CH / 1920;                       // scale factor for other output heights
+const SAFE = {
+  x0: _sp.left * K, x1: CW - _sp.right * K,
+  y0: _sp.top * K, y1: CH - _sp.bottom * K
+};
+SAFE.w = SAFE.x1 - SAFE.x0;
+SAFE.h = SAFE.y1 - SAFE.y0;
+const DEBUG_SAFE = Q.get('safe') === '1';
+
 // Grade. Defaults are measured targets: a warm lifted black point instead of
 // crushed blue-black, mid-tones around 0.5 luma, and a corner vignette of ~0.86.
 const GRADE = Object.assign({ exposure: 1.28, lift: [35, 19, 20], vignette: 0.42 }, FILM.grade || {});
@@ -569,15 +592,15 @@ function drawHUD(t, g) {
     const a = sg(t, 0.7, 1.5), out = sg(t, 3.9, 4.7);
     if (a > 0 && out < 1) {
       g.save(); g.globalAlpha = ease(a) * (1 - ease(out));
-      const y = 640 - (1 - ease(a)) * 40;
-      panel(g, 70, y, W - 140, 280, ti.accent || '#e8b64c');
-      g.fillStyle = ti.accent || '#e8b64c'; g.fillRect(96, y + 40, 7, 200);
+      const y = SAFE.y0 + SAFE.h * 0.18 - (1 - ease(a)) * 40;
+      panel(g, SAFE.x0, y, SAFE.w, 280 * K, ti.accent || '#e8b64c');
+      g.fillStyle = ti.accent || '#e8b64c'; g.fillRect(SAFE.x0 + 26, y + 40, 7, 200);
       g.textAlign = 'left';
       g.fillStyle = '#f6e6c2'; g.font = `700 ${ti.size || 72}px Deva, serif`;
-      g.fillText(ti.heading, 132, y + 108);
+      g.fillText(ti.heading, SAFE.x0 + 62, y + 108);
       if (ti.sub) {
         g.fillStyle = '#9fb6c4'; g.font = `400 ${ti.subSize || 38}px Deva, serif`;
-        g.fillText(ti.sub, 132, y + 190);
+        g.fillText(ti.sub, SAFE.x0 + 62, y + 190);
       }
       g.restore();
     }
@@ -589,8 +612,8 @@ function drawHUD(t, g) {
     const a = sg(t, T.s3 + 1.0, T.s3 + 1.7), out = sg(t, T.s4, T.s4 + 0.7);
     if (a > 0 && out < 1) {
       g.save(); g.globalAlpha = ease(a) * (1 - ease(out));
-      const y = 560 + (1 - ease(a)) * 30;
-      panel(g, 110, y, W - 220, 250, q.accent || '#e8b64c');
+      const y = SAFE.y0 + SAFE.h * 0.28 + (1 - ease(a)) * 30;
+      panel(g, SAFE.x0, y, SAFE.w, 250 * K, q.accent || '#e8b64c');
       g.textAlign = 'center';
       if (q.label) {
         g.fillStyle = q.accent || '#e8b64c'; g.font = '400 34px Deva, serif';
@@ -605,12 +628,20 @@ function drawHUD(t, g) {
   // ---- steps ----
   (G.steps || []).forEach((step, i) => {
     const a = sg(t, T.s4 + i * 0.14, T.s4 + i * 0.14 + 0.5);
-    const out = sg(t, T.s9 - 0.5, T.s9 + 0.1);
+    // step aside for the proof and cost cards, which own the frame in their beats
+    const aside = Math.max(
+      sg(t, T.s7 - 0.2, T.s7 + 0.4) * (1 - sg(t, T.s8 + 0.1, T.s8 + 0.7)),
+      sg(t, T.s12 - 0.2, T.s12 + 0.4) * (1 - sg(t, T.s13 - 0.2, T.s13 + 0.4))
+    );
+    const out = Math.max(sg(t, T.s9 - 0.5, T.s9 + 0.1), aside);
     if (a <= 0 || out >= 1) return;
     const lit = t > STEP_T(i);
     const pulse = (t > STEP_T(i) && t < STEP_T(i) + 0.55)
       ? 1 + 0.06 * Math.sin(sg(t, STEP_T(i), STEP_T(i) + 0.55) * Math.PI) : 1;
-    const x = 120, y = 470 + i * 150, w = W - 240, h = 118;
+    const h = Math.round(104 * K), gap = Math.round(14 * K);
+    const x = SAFE.x0, w = SAFE.w;
+    const totalH = 6 * h + 5 * gap;
+    const y = SAFE.y0 + (SAFE.h - totalH) / 2 + i * (h + gap);
     g.save();
     g.globalAlpha = (lit ? 1 : 0.62) * (1 - ease(out)) * ease(a);
     g.translate(W / 2, y + h / 2); g.scale(pulse, pulse);
@@ -631,8 +662,8 @@ function drawHUD(t, g) {
     const a = sg(t, T.s7 + 0.5, T.s7 + 1.1), out = sg(t, T.s9 - 0.9, T.s9 - 0.3);
     if (a > 0 && out < 1) {
       g.save(); g.globalAlpha = ease(a) * (1 - ease(out));
-      const y = 980 + (1 - ease(a)) * 30;
-      panel(g, 130, y, W - 260, 330, pf.accent || '#5ab86a');
+      const y = SAFE.y0 + SAFE.h * 0.32 + (1 - ease(a)) * 30;
+      panel(g, SAFE.x0 + 10 * K, y, SAFE.w - 20 * K, 330 * K, pf.accent || '#5ab86a');
       g.textAlign = 'center';
       if (pf.stars) { g.fillStyle = '#8ef0a8'; g.font = '700 46px Deva, serif'; g.fillText(pf.stars, W / 2, y + 66); }
       g.fillStyle = '#f6e6c2'; g.font = '400 42px Deva, serif';
@@ -648,8 +679,8 @@ function drawHUD(t, g) {
     const a = sg(t, T.s12 + 0.4, T.s12 + 1.0), out = sg(t, T.s13, T.s13 + 0.5);
     if (a > 0 && out < 1) {
       g.save(); g.globalAlpha = ease(a) * (1 - ease(out));
-      const y = 960 + (1 - ease(a)) * 30;
-      panel(g, 130, y, W - 260, 300, cs.accent || '#e0574a', 'rgba(30,10,14,0.95)');
+      const y = SAFE.y0 + SAFE.h * 0.36 + (1 - ease(a)) * 30;
+      panel(g, SAFE.x0 + 10 * K, y, SAFE.w - 20 * K, 300 * K, cs.accent || '#e0574a', 'rgba(30,10,14,0.95)');
       g.textAlign = 'center';
       g.fillStyle = '#ffd9c9'; g.font = '700 50px Deva, serif'; g.fillText(cs.line1, W / 2, y + 92);
       g.fillStyle = '#ff7a66'; g.font = '700 62px Deva, serif'; g.fillText(cs.line2, W / 2, y + 176);
@@ -664,7 +695,7 @@ function drawHUD(t, g) {
     const a = sg(t, T.s13 + 2.4, T.s13 + 2.9), out = sg(t, T.s14 + 0.1, T.s14 + 0.7);
     if (a > 0 && out < 1) {
       g.save(); g.globalAlpha = ease(a) * (1 - ease(out));
-      g.translate(W / 2, 760); g.rotate(-0.08);
+      g.translate((SAFE.x0 + SAFE.x1) / 2, SAFE.y0 + SAFE.h * 0.5); g.rotate(-0.08);
       const sc = 0.7 + 0.3 * ease(a); g.scale(sc, sc);
       g.fillStyle = 'rgba(6,20,12,0.92)'; hudRR(g, -290, -115, 580, 230, 22); g.fill();
       g.strokeStyle = '#4ad07a'; g.lineWidth = 16; hudRR(g, -290, -115, 580, 230, 22); g.stroke();
@@ -680,8 +711,8 @@ function drawHUD(t, g) {
     const a = sg(t, T.s14 + 1.6, T.s14 + 2.5);
     if (a > 0) {
       g.save(); g.globalAlpha = ease(a);
-      const y = 760 + (1 - ease(a)) * 30;
-      panel(g, 80, y, W - 160, 360, ec.accent || '#e8b64c');
+      const y = SAFE.y0 + SAFE.h * 0.22 + (1 - ease(a)) * 30;
+      panel(g, SAFE.x0, y, SAFE.w, 360 * K, ec.accent || '#e8b64c');
       g.textAlign = 'center';
       g.fillStyle = '#f6e6c2'; g.font = '700 66px Deva, serif'; g.fillText(ec.line1, W / 2, y + 108);
       g.fillStyle = ec.accent || '#e8b64c'; g.font = '700 66px Deva, serif'; g.fillText(ec.line2, W / 2, y + 188);
@@ -736,8 +767,24 @@ function drawHUD(t, g) {
 
   // ---- progress bar ----
   const pr = Math.min(1, t / DUR);
-  g.fillStyle = 'rgba(255,255,255,0.10)'; g.fillRect(0, 0, W, 6);
-  g.fillStyle = '#e8b64c'; g.fillRect(0, 0, W * pr, 6);
+  const barY = SAFE.y0 - 14 * K;
+  g.fillStyle = 'rgba(255,255,255,0.12)'; g.fillRect(SAFE.x0, barY, SAFE.w, 5 * K);
+  g.fillStyle = '#e8b64c'; g.fillRect(SAFE.x0, barY, SAFE.w * pr, 5 * K);
+
+  // ?safe=1 draws the platform UI zones so you can check a frame
+  if (DEBUG_SAFE) {
+    g.save();
+    g.fillStyle = 'rgba(255,60,60,0.22)';
+    g.fillRect(0, 0, W, SAFE.y0);
+    g.fillRect(0, SAFE.y1, W, H - SAFE.y1);
+    g.fillRect(0, 0, SAFE.x0, H);
+    g.fillRect(SAFE.x1, 0, W - SAFE.x1, H);
+    g.strokeStyle = '#4ad07a'; g.lineWidth = 4;
+    g.strokeRect(SAFE.x0, SAFE.y0, SAFE.w, SAFE.h);
+    g.fillStyle = '#4ad07a'; g.font = '600 30px ui-monospace, monospace';
+    g.fillText(`safe: ${SAFE_NAME}  x ${Math.round(SAFE.x0)}-${Math.round(SAFE.x1)}  y ${Math.round(SAFE.y0)}-${Math.round(SAFE.y1)}`, SAFE.x0 + 8, SAFE.y0 + 34);
+    g.restore();
+  }
 }
 
 // ---------------- camera ----------------
@@ -929,7 +976,7 @@ function update(t) {
   updateGraphics3D(t);
 }
 
-if (STYLE === 'toon') { makeToon(); renderer.toneMappingExposure = (GRADE.exposure || 1.28) * 1.25; }
+if (STYLE === 'toon') makeToon();
 
 const canvas = renderer.domElement;
 const c2d = document.createElement('canvas'); c2d.width = CW; c2d.height = CH;
