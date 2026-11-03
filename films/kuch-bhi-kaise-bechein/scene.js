@@ -28,7 +28,7 @@ renderer.setSize(CW, CH);
 renderer.shadowMap.enabled = false;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.0;
+renderer.toneMappingExposure = 1.28;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 document.body.appendChild(renderer.domElement);
 
@@ -56,6 +56,10 @@ function roundRect(g, x, y, w, h, r) {
   g.lineTo(x + r, y + h); g.quadraticCurveTo(x, y + h, x, y + h - r);
   g.lineTo(x, y + r); g.quadraticCurveTo(x, y, x + r, y); g.closePath();
 }
+// Grade. Defaults are measured targets: a warm lifted black point instead of
+// crushed blue-black, mid-tones around 0.5 luma, and a corner vignette of ~0.86.
+const GRADE = Object.assign({ exposure: 1.28, lift: [35, 19, 20], vignette: 0.42 }, FILM.grade || {});
+
 const M = (c, o = {}) => new THREE.MeshLambertMaterial(Object.assign({ color: c }, o));
 const basic = (c, o = {}) => new THREE.MeshBasicMaterial(Object.assign({ color: c }, o));
 const hexCss = n => '#' + n.toString(16).padStart(6, '0');
@@ -841,15 +845,22 @@ const c2d = document.createElement('canvas'); c2d.width = CW; c2d.height = CH;
 const g2d = c2d.getContext('2d');
 const vigGrad = g2d.createRadialGradient(CW / 2, CH / 2, CH * 0.16, CW / 2, CH / 2, CH * 0.70);
 vigGrad.addColorStop(0, 'rgba(0,0,0,0)');
-vigGrad.addColorStop(0.55, 'rgba(0,0,0,0.12)');
-vigGrad.addColorStop(1, 'rgba(0,0,0,0.55)');
+vigGrad.addColorStop(0.55, `rgba(0,0,0,${(GRADE.vignette * 0.22).toFixed(3)})`);
+vigGrad.addColorStop(1, `rgba(0,0,0,${GRADE.vignette.toFixed(3)})`);
 window.renderFrame = function (i) {
   const t = i / FPS;
   update(t);
   renderer.render(scene, camera);
   g2d.drawImage(canvas, 0, 0);
+  // grade: lift the floor to a warm near-black (never pure black) — 'lighten'
+  // raises any channel below the target and leaves everything above untouched
   drawHUD(t, g2d);
   g2d.fillStyle = vigGrad; g2d.fillRect(0, 0, CW, CH);
+  // lift last, so the warm floor survives the vignette
+  g2d.globalCompositeOperation = 'lighten';
+  g2d.fillStyle = `rgb(${GRADE.lift[0]},${GRADE.lift[1]},${GRADE.lift[2]})`;
+  g2d.fillRect(0, 0, CW, CH);
+  g2d.globalCompositeOperation = 'source-over';
   const fo = fade.material.opacity;
   if (fo > 0.001) { g2d.globalAlpha = fo; g2d.fillStyle = '#000'; g2d.fillRect(0, 0, CW, CH); g2d.globalAlpha = 1; }
   return c2d.toDataURL('image/jpeg', 0.93);
