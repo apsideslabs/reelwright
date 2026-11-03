@@ -6,6 +6,7 @@
     1080,
     1920
   ],
+  "style": "toon",
   "grade": {
     "exposure": 1.28,
     "lift": [
@@ -325,5 +326,26 @@
     "target_lufs": -14.0,
     "ceiling_dbtp": -1.5,
     "duck_db": -3.5
-  }
+  },
+  "fx": [
+    {
+      "at": "l3",
+      "offset": 2.2,
+      "kind": "impact",
+      "x": 0.5,
+      "y": 0.4,
+      "dur": 0.55,
+      "color": "#e8b64c"
+    },
+    {
+      "at": "l13",
+      "offset": 2.6,
+      "kind": "sparkle",
+      "x": 0.5,
+      "y": 0.42,
+      "dur": 0.9,
+      "count": 14,
+      "color": "#ffe08a"
+    }
+  ]
 }
