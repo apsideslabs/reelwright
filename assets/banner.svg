@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 320" width="1200" height="320" role="img" aria-label="Reelwright — vertical explainer videos, built from a script">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b0f1a"/>
+      <stop offset="0.55" stop-color="#101a2b"/>
+      <stop offset="1" stop-color="#0b0f1a"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f0c874"/>
+      <stop offset="1" stop-color="#c9782f"/>
+    </linearGradient>
+    <linearGradient id="fade" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#e8b64c" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#e8b64c" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="320" fill="url(#bg)"/>
+  <g opacity="0.16" stroke="#8fb6ff" stroke-width="1" fill="none">
+    <path d="M0 250 L1200 250"/><path d="M0 275 L1200 275"/>
+    <circle cx="1010" cy="150" r="120"/><circle cx="1010" cy="150" r="86"/>
+  </g>
+  <g transform="translate(72,96)">
+    <rect x="0" y="0" width="128" height="128" rx="30" fill="#0d1220" stroke="url(#gold)" stroke-width="4"/>
+    <rect x="42" y="26" width="44" height="76" rx="10" fill="none" stroke="#f6e6c2" stroke-width="5"/>
+    <path d="M58 50 L80 64 L58 78 Z" fill="url(#gold)"/>
+  </g>
+  <text x="240" y="164" font-family="Georgia, 'Times New Roman', serif" font-size="76" font-weight="bold" fill="#f6e6c2" letter-spacing="3">REELWRIGHT</text>
+  <rect x="242" y="188" width="330" height="4" rx="2" fill="url(#fade)"/>
+  <text x="242" y="232" font-family="Georgia, serif" font-size="30" fill="#9fb6c4">Vertical explainer videos, built from a script.</text>
+  <text x="72" y="292" font-family="ui-monospace, Menlo, monospace" font-size="19" fill="#6f8496">Piper TTS  ·  three.js  ·  ffmpeg  ·  no editor, no stock, no licences</text>
+</svg>
