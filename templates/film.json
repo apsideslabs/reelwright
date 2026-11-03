@@ -2,8 +2,19 @@
   "slug": "my-film",
   "title": "My Film",
   "fps": 24,
-  "size": [1080, 1920],
-
+  "size": [
+    1080,
+    1920
+  ],
+  "grade": {
+    "exposure": 1.28,
+    "lift": [
+      35,
+      19,
+      20
+    ],
+    "vignette": 0.42
+  },
   "voice": {
     "model": "en_US-lessac-medium",
     "length_scale": 1.06,
@@ -13,33 +24,86 @@
   "lead": 1.2,
   "gap": 0.45,
   "tail": 1.0,
-
   "lines": [
-    { "id": "l1", "text": "This is where your story starts." },
-    { "id": "l2", "text": "Say the thing that changes how they see it." },
-    { "id": "l3", "text": "Then show them what to do next." }
+    {
+      "id": "l1",
+      "text": "This is where your story starts."
+    },
+    {
+      "id": "l2",
+      "text": "Say the thing that changes how they see it."
+    },
+    {
+      "id": "l3",
+      "text": "Then show them what to do next."
+    }
   ],
-
-  "beats": { "s2": "l2", "s3": "l3", "s4": "l3", "s5": "l3", "s6": "l3",
-             "s7": "l3", "s8": "l3", "s9": "l3", "s10": "l3", "s11": "l3",
-             "s12": "l3", "s13": "l3", "s14": "l3" },
-
-  "graphics": {
-    "title": { "heading": "MY FILM", "sub": "a one-line promise", "accent": "#e8b64c" },
-    "steps": [
-      { "n": "1", "label": "PROBLEM", "color": "#e0574a" },
-      { "n": "2", "label": "AGITATE", "color": "#e08a3c" },
-      { "n": "3", "label": "SOLUTION", "color": "#e0c23c" }
-    ],
-    "end": { "line1": "SELL THE OUTCOME", "line2": "NOT THE PRODUCT", "accent": "#e8b64c" }
+  "beats": {
+    "s2": "l2",
+    "s3": "l3",
+    "s4": "l3",
+    "s5": "l3",
+    "s6": "l3",
+    "s7": "l3",
+    "s8": "l3",
+    "s9": "l3",
+    "s10": "l3",
+    "s11": "l3",
+    "s12": "l3",
+    "s13": "l3",
+    "s14": "l3"
   },
-
+  "graphics": {
+    "title": {
+      "heading": "MY FILM",
+      "sub": "a one-line promise",
+      "accent": "#e8b64c"
+    },
+    "steps": [
+      {
+        "n": "1",
+        "label": "PROBLEM",
+        "color": "#e0574a"
+      },
+      {
+        "n": "2",
+        "label": "AGITATE",
+        "color": "#e08a3c"
+      },
+      {
+        "n": "3",
+        "label": "SOLUTION",
+        "color": "#e0c23c"
+      }
+    ],
+    "end": {
+      "line1": "SELL THE OUTCOME",
+      "line2": "NOT THE PRODUCT",
+      "accent": "#e8b64c"
+    }
+  },
   "music": {
     "bed_gain": 0.4,
     "cues": [
-      { "at": "l1", "inst": "pad", "note": "C3", "dur": 8 },
-      { "at": "l1", "inst": "pluck", "every": 1.2, "count": 5,
-        "notes": ["C4", "E4", "G4", "C5", "G4"] }
+      {
+        "at": "l1",
+        "inst": "pad",
+        "note": "C3",
+        "dur": 8
+      },
+      {
+        "at": "l1",
+        "inst": "pluck",
+        "every": 1.2,
+        "count": 5,
+        "notes": [
+          "C4",
+          "E4",
+          "G4",
+          "C5",
+          "G4"
+        ]
+      }
     ]
   }
 }
