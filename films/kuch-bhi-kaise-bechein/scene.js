@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
-import { FPS, DUR, T } from './timeline.js';
+import { OutlineEffect } from 'three/addons/effects/OutlineEffect.js';
+import { FPS, DUR, T, LINES } from './timeline.js';
 import { FILM } from './film.js';
 
 // =====================================================================
@@ -56,6 +57,11 @@ function roundRect(g, x, y, w, h, r) {
   g.lineTo(x + r, y + h); g.quadraticCurveTo(x, y + h, x, y + h - r);
   g.lineTo(x, y + r); g.quadraticCurveTo(x, y, x + r, y); g.closePath();
 }
+// Style. 'real' keeps the lit PBR/Lambert look; 'toon' swaps every material for
+// cel shading with a stepped ramp and renders through an inverted-hull outline
+// pass — the flat-colour-plus-ink look most animated shorts are built from.
+const STYLE = FILM.style || 'real';
+
 // Grade. Defaults are measured targets: a warm lifted black point instead of
 // crushed blue-black, mid-tones around 0.5 luma, and a corner vignette of ~0.86.
 const GRADE = Object.assign({ exposure: 1.28, lift: [35, 19, 20], vignette: 0.42 }, FILM.grade || {});
@@ -63,6 +69,45 @@ const GRADE = Object.assign({ exposure: 1.28, lift: [35, 19, 20], vignette: 0.42
 const M = (c, o = {}) => new THREE.MeshLambertMaterial(Object.assign({ color: c }, o));
 const basic = (c, o = {}) => new THREE.MeshBasicMaterial(Object.assign({ color: c }, o));
 const hexCss = n => '#' + n.toString(16).padStart(6, '0');
+
+// ---------------- toon setup ----------------
+let outline = null;
+function makeToon() {
+  // four-step ramp: shadow, low mid, high mid, light
+  // RGBA, four bands. (RGBFormat was removed from three; using it silently
+  // breaks the gradient map and the whole scene renders near-black.)
+  const bands = [138, 196, 232, 255];
+  const steps = new Uint8Array(bands.flatMap(v => [v, v, v, 255]));
+  const ramp = new THREE.DataTexture(steps, 4, 1, THREE.RGBAFormat);
+  ramp.needsUpdate = true;
+  ramp.minFilter = ramp.magFilter = THREE.NearestFilter;
+  ramp.generateMipmaps = false;
+
+  const conv = m => {
+    const n = new THREE.MeshToonMaterial({
+      color: m.color ? m.color.clone() : new THREE.Color(0xffffff),
+      map: m.map || null,
+      gradientMap: ramp,
+      transparent: !!m.transparent,
+      opacity: m.opacity !== undefined ? m.opacity : 1
+    });
+    if (m.emissive) n.emissive = m.emissive.clone();
+    n.userData.outlineParameters = { thickness: 0.0036, color: [0.05, 0.04, 0.05], alpha: 1 };
+    return n;
+  };
+  scene.traverse(o => {
+    if (!o.isMesh || !o.material) return;
+    const arr = Array.isArray(o.material) ? o.material : [o.material];
+    const next = arr.map(m => (m.isMeshBasicMaterial ? m : conv(m)));
+    o.material = Array.isArray(o.material) ? next : next[0];
+  });
+  outline = new OutlineEffect(renderer, {
+    defaultThickness: 0.0036,
+    defaultColor: [0.06, 0.05, 0.06],
+    defaultAlpha: 1,
+    defaultKeepAlive: true
+  });
+}
 
 // ---------------- lights ----------------
 const hemi = new THREE.HemisphereLight(0xd8e8ff, 0x5a4632, 1.15);
@@ -645,6 +690,50 @@ function drawHUD(t, g) {
     }
   }
 
+  // ---- cartoon FX (2D sprites, the way these shorts punch a beat) ----
+  (FILM.fx || []).forEach(fx => {
+    const anchor = fx.at in T ? T[fx.at] : (LINES[fx.at] ? LINES[fx.at].start : null);
+    if (anchor === null) return;
+    const t0 = anchor + (fx.offset || 0);
+    const dur = fx.dur || 0.6;
+    const p = (t - t0) / dur;
+    if (p < 0 || p > 1) return;
+    const cx = (fx.x ?? 0.5) * W, cy = (fx.y ?? 0.45) * H;
+    g.save();
+    g.globalAlpha = Math.pow(1 - p, 1.6);
+    if (fx.kind === 'impact') {
+      const r = 40 + p * 260 * (fx.scale || 1);
+      g.strokeStyle = fx.color || '#ffd45e';
+      g.lineWidth = 12 * (1 - p) + 2;
+      g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.stroke();
+      for (let k = 0; k < 10; k++) {
+        const a = (k / 10) * Math.PI * 2 + 0.3;
+        const r0 = r * 0.75, r1 = r * 1.25;
+        g.beginPath();
+        g.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0);
+        g.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1);
+        g.stroke();
+      }
+    } else {
+      const n = fx.count || 12;
+      g.fillStyle = fx.color || '#ffe08a';
+      for (let k = 0; k < n; k++) {
+        const a = (k / n) * Math.PI * 2 + (fx.seed || 0);
+        const dist = (0.25 + 0.75 * p) * 260 * (fx.scale || 1);
+        const x = cx + Math.cos(a) * dist, y = cy + Math.sin(a) * dist;
+        const s = (1 - p) * 13;
+        g.beginPath();
+        for (let q = 0; q < 4; q++) {
+          const ang = a + q * Math.PI / 2;
+          g.lineTo(x + Math.cos(ang) * s, y + Math.sin(ang) * s);
+          g.lineTo(x + Math.cos(ang + Math.PI / 4) * s * 0.38, y + Math.sin(ang + Math.PI / 4) * s * 0.38);
+        }
+        g.closePath(); g.fill();
+      }
+    }
+    g.restore();
+  });
+
   // ---- progress bar ----
   const pr = Math.min(1, t / DUR);
   g.fillStyle = 'rgba(255,255,255,0.10)'; g.fillRect(0, 0, W, 6);
@@ -840,6 +929,8 @@ function update(t) {
   updateGraphics3D(t);
 }
 
+if (STYLE === 'toon') { makeToon(); renderer.toneMappingExposure = (GRADE.exposure || 1.28) * 1.25; }
+
 const canvas = renderer.domElement;
 const c2d = document.createElement('canvas'); c2d.width = CW; c2d.height = CH;
 const g2d = c2d.getContext('2d');
@@ -850,7 +941,8 @@ vigGrad.addColorStop(1, `rgba(0,0,0,${GRADE.vignette.toFixed(3)})`);
 window.renderFrame = function (i) {
   const t = i / FPS;
   update(t);
-  renderer.render(scene, camera);
+  if (outline) outline.render(scene, camera);
+  else renderer.render(scene, camera);
   g2d.drawImage(canvas, 0, 0);
   // grade: lift the floor to a warm near-black (never pure black) — 'lighten'
   // raises any channel below the target and leaves everything above untouched
@@ -868,5 +960,5 @@ window.renderFrame = function (i) {
 window.USE_OVERLAY = Q.get('ov') !== '0';
 window.FPS = FPS; window.TOTAL = Math.round(FPS * DUR);
 update(0);
-renderer.render(scene, camera);
+if (outline) outline.render(scene, camera); else renderer.render(scene, camera);
 window.sceneReady = true;
