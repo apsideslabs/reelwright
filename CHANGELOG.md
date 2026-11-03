@@ -2,6 +2,19 @@
 
 All notable changes to Reelwright. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning is [SemVer](https://semver.org/).
 
+## [1.4.0] — 2026-11-04
+
+### Added
+- **Platform safe areas.** `safeArea` in `film.json` (`all`, `tiktok`, `reels`, `shorts`, `none`) lays every graphic inside the box TikTok, Reels and Shorts leave clear — x 120–880, y 290–1240 on a 1080×1920 frame. `?safe=1` on the render URL draws the covered zones for checking. See `docs/safe-areas.md`.
+- **`kit/selftest.py`** — builds a three-line film at low resolution through every stage and asserts the artefacts and the QA verdict. `make test`, ~2 minutes, 14 checks.
+- `qa.py --ignore` and `build.py --qa-ignore` for checks that are legitimately acceptable on a given film.
+- `make qa` and `make test` targets.
+
+### Fixed
+- The six-step checklist overflowed the platform UI on the bottom and right — the last two steps were hidden under TikTok's caption block. Proof and cost cards overflowed the bottom edge.
+- The checklist no longer collides with the proof and cost cards; it steps aside for those beats.
+- Toon mode was double-exposed (a compensation for the broken ramp that the RGBA fix made unnecessary).
+
 ## [1.3.0] — 2026-11-03
 
 ### Added
