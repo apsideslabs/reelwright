@@ -1,76 +1,186 @@
-# Vertical Explainer Kit
+<div align="center">
 
-Make a narrated, vertical (9:16) 3D explainer video from a JSON script — no editor, no stock footage, no licences to clear. Everything is generated: the voice, the music, the sound effects, the characters, the motion graphics and the frames.
+<img src="assets/banner.svg" alt="Reelwright — vertical explainer videos, built from a script" width="100%">
 
-Built for and battle-tested on a 2-core / 2 GB CPU-only box, where it produced an 85-second 1080×1920 Hindi explainer in about 90 minutes of rendering.
+<br>
 
-```
-film.json  ──►  voice ──► timings ──► scene timeline ──► frames ──► mp4
-                  │                        ▲
-                  └──► music ──► mix.wav ──┘
-```
+**Write a script. Get a finished vertical video.** Voice, score, characters, motion graphics and frames — all generated from one JSON file. No editor, no stock footage, no licences to clear.
 
-## What's in the box
+[![License: MIT](https://img.shields.io/badge/license-MIT-e8b64c.svg?style=flat-square)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%2B-3776ab.svg?style=flat-square&logo=python&logoColor=white)](requirements.txt)
+[![Node](https://img.shields.io/badge/node-18%2B-339933.svg?style=flat-square&logo=node.js&logoColor=white)](package.json)
+[![three.js](https://img.shields.io/badge/three.js-r169-000000.svg?style=flat-square&logo=three.js&logoColor=white)](kit/lib/three.module.js)
+[![No GPU](https://img.shields.io/badge/GPU-not%20required-5ab86a.svg?style=flat-square)](#performance)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-e0574a.svg?style=flat-square)](CONTRIBUTING.md)
 
-| Piece | What it does |
+`#vertical-video` `#explainer` `#three.js` `#text-to-speech` `#procedural-audio` `#ffmpeg` `#reels` `#shorts` `#pipeline`
+
+</div>
+
+---
+
+Reelwright turns a written script into a narrated 9:16 film: a TTS voice measured to the millisecond, a score synthesised from sine waves, a rigged 3D character who moves his lips to the narration, motion graphics that stay crisp at any camera angle, and an MP4 at the end. It ran the 85-second Hindi explainer in [`films/kuch-bhi-kaise-bechein`](films/kuch-bhi-kaise-bechein) on a **2-core, 2 GB, GPU-less box**.
+
+<div align="center">
+<img src="docs/stills/frame-title.jpg" width="24%" alt="title card">
+<img src="docs/stills/frame-steps.jpg" width="24%" alt="six-step checklist">
+<img src="docs/stills/frame-sale.jpg" width="24%" alt="the sale">
+</div>
+
+## Contents
+
+- [Why it exists](#why-it-exists)
+- [Quickstart](#quickstart)
+- [How it works](#how-it-works)
+- [The script format](#the-script-format)
+- [Performance](#performance)
+- [Quality control](#quality-control)
+- [Project layout](#project-layout)
+- [Craft rules](#craft-rules)
+- [Roadmap](#roadmap)
+- [Credits](#credits)
+- [Licence](#licence)
+
+## Why it exists
+
+Making a decent explainer normally means an editor, a voice artist, a stock subscription and a licence audit. Reelwright replaces all four with a pipeline you can read:
+
+| Normally | Here |
 |---|---|
-| `kit/voice.py` | Speaks your script with [Piper](https://github.com/rhasspy/piper) TTS, measures every line, emits `timings.json` and a lip-sync envelope |
-| `kit/music.py` | Synthesises a score and SFX from sine waves — no samples, described declaratively in `film.json` |
-| `kit/render.js` | Drives the scene in headless Chromium and writes JPEG frames; resumable and chunkable |
-| `kit/encode.py` | Frames + audio → H.264 MP4, tuned for low-RAM machines |
-| `kit/build.py` | Runs the whole chain, generates `timeline.js` from the measured audio |
-| `kit/lib/` | three.js, GLTFLoader, SkeletonUtils, a Devanagari font, a rigged human avatar |
-| `films/kuch-bhi-kaise-bechein/` | A complete worked example — 85 s Hindi explainer on selling |
+| Record voice, hand-time every cut | `voice.py` measures each line; the timeline is **generated** from it |
+| Licence stock music | Score synthesised from sine waves, described as JSON cues |
+| Rig a character in Blender | A rigged avatar posed bone-by-bone in code, lip-synced from the narration |
+| Animate titles in After Effects | Motion graphics drawn in Canvas 2D at 1080×1920, in the same pass |
+| Export and hope | `qa.py` checks every frame for black, blown, frozen and pop frames, plus loudness |
 
 ## Quickstart
 
 ```bash
-pip install piper-tts numpy imageio-ffmpeg
-# Chromium must be on PATH (or pass --exec /path/to/chromium to kit/render.js)
+git clone https://github.com/apsideslabs/reelwright && cd reelwright
+pip install -r requirements.txt && npm install          # puppeteer-core
+# Chromium must be on PATH, or set CHROME=/path/to/chromium
 
-# 1. copy the example film as your starting point
-./new-film.sh my-film
-
-# 2. edit films/my-film/film.json — your script, your graphics, your music
-
-# 3. build it
-python kit/build.py --film films/my-film/film.json
-#    -> build/my-film/my-film.mp4
+./new-film.sh my-film                                   # scaffold from the worked example
+$EDITOR films/my-film/film.json                         # your script, graphics, music
+python kit/build.py --film films/my-film/film.json      # -> build/my-film/my-film.mp4
 ```
 
-That's the whole loop. The first run downloads a ~63 MB voice model into `voices/`.
-
-Quick look before committing to a full render (renders at quarter size, seconds per frame):
+Preview in seconds instead of an hour:
 
 ```bash
-python kit/build.py --film films/my-film/film.json --steps site \
-  && node kit/render.js --site build/my-film/site --out build/my-film/preview \
-     --list=80,470,700 --query="w=540&h=960"
+make preview FILM=films/my-film/film.json
+# renders three stills at quarter size into build/my-film/preview/
 ```
 
-## Why it's built this way
+## How it works
 
-**Timing comes from the audio, never from your guesses.** `voice.py` measures each line and writes `timings.json`. `build.py` turns that into `timeline.js`, which the scene imports. Every cut, card and camera move is positioned against real speech. Change one word in the script and the whole film re-times itself.
+```
+film.json ──► voice.py ──► narration.wav + timings.json + envelope.json
+          └─► music.py ──► music.wav (score stem) + cues.json
+                                    │
+                                    ▼
+                             mix.py ──► mix.wav  (ducked, -14 LUFS, stems, report)
+                                    │
+build.py ──► build/<slug>/site/     │
+              timeline.js  ◄────────┘  every cut derived from measured speech
+              film.js
+              scene.js
+                │
+render.js ──► frames/f00000.jpg …   (resumable, chunkable)
+                │
+encode.py ──► <slug>.mp4 ──► qa.py ──► qa/qa-report.md + contact sheet
+```
 
-**The scene is code, the content is data.** Camera moves and acting live in `scene.js` where they belong; every word on screen, the six steps, the colours and the music cues live in `film.json`.
+**The one idea worth stealing:** no scene ever contains a timestamp. It contains `T.s4`, and `T` is generated from the audio. Change a word and the whole film re-times itself.
 
-**Graphics are drawn in screen space.** 3D text gets clipped by tight vertical framing and blurs under perspective. The HUD layer draws to a 2D canvas after the 3D render, so type stays crisp and correctly framed at any camera angle — and it costs nothing to render.
+```js
+// films/*/scene.js
+if (t < T.s3) return camLerp(K.wide, K.medium, easeInOut(seg(t, T.s2, T.s2 + 1.6)));
+```
 
-**Rendering is resumable.** Software WebGL is slow, so `render.js` skips frames already on disk. Kill it, re-run it, it continues. Chunk it with `timeout` and loop.
+## The script format
 
-## Requirements
+Everything a film needs lives in one file — narration, scene beats, on-screen text, music cues. Full reference in [`docs/film-format.md`](docs/film-format.md).
 
-- Node 18+ with `puppeteer-core` (`npm i puppeteer-core`), Chromium
-- Python 3.10+ with `piper-tts`, `numpy`, `imageio-ffmpeg`
-- No GPU needed — software WebGL (SwiftShader) is fine, just slow
+```jsonc
+{
+  "slug": "my-film",
+  "fps": 24,
+  "voice": { "model": "hi_IN-pratham-medium", "length_scale": 1.09, "pitch": 0.955 },
+  "lines": [
+    { "id": "l1", "text": "This is where your story starts." },
+    { "id": "l2", "text": "Then say the thing that changes how they see it." }
+  ],
+  "beats": { "s2": "l2", "s3": "l3" },
+  "graphics": {
+    "title": { "heading": "MY FILM", "sub": "a one-line promise" },
+    "steps": [ { "n": "1", "label": "PROBLEM", "color": "#e0574a" } ]
+  },
+  "music": {
+    "bed_gain": 0.42,
+    "cues": [ { "at": "l1", "inst": "pad", "note": "C3", "dur": 9 } ]
+  }
+}
+```
 
-## Docs
+## Performance
 
-- [`docs/film-format.md`](docs/film-format.md) — every field in `film.json`
-- [`docs/customising.md`](docs/customising.md) — changing cast, staging, camera, graphics
-- [`docs/architecture.md`](docs/architecture.md) — how the pieces fit, and why
-- [`docs/troubleshooting.md`](docs/troubleshooting.md) — blank frames, slow renders, font and CORS issues
+No GPU required — Chromium falls back to SwiftShader, which is correct but slow.
 
-## Licence and credits
+| Resolution | Per frame | 60 s at 24 fps |
+|---|---|---|
+| 1080×1920 | ~2–4 s | 60–90 min |
+| 720×1280 | ~1–1.5 s | 25–35 min |
 
-Code MIT. Bundled assets keep their own licences — see [`NOTICE.md`](NOTICE.md). The avatar is a Ready Player Me sample model shipped with three.js examples; the font is Noto Sans Devanagari (OFL).
+Rendering is **resumable**: `render.js --resume` skips frames already on disk, and `build.py` loops in chunks until the film is complete. Kill it, run it again, it continues. On a 2 GB box, `encode.py` pins x264 to one thread; without that it dies with *Cannot allocate memory*.
+
+## Quality control
+
+`qa.py` is the part that keeps you honest. It decodes the finished MP4 at low resolution and reports:
+
+```
+PASS  0 problem(s), 2 warning(s)
+  ! 3 still runs — a held camera is a choice, but a dead-still shot reads as a stall
+luma mean 0.412 · motion mean 0.284 · black 0 · white 0 · pops 0
+integrated loudness -14.2 LUFS · true peak -1.6 dBTP
+```
+
+It exits non-zero on failure, so it drops straight into CI. See [`docs/qa.md`](docs/qa.md).
+
+## Project layout
+
+```
+kit/            the pipeline: voice, music, mix, render, encode, qa, build
+kit/lib/        three.js, loaders, SkeletonUtils, Devanagari font, rigged avatar
+films/          one directory per film: film.json + scene.js
+templates/      starter film.json and index.html
+docs/           format reference, customising, architecture, qa, troubleshooting
+assets/         logo and banner
+```
+
+## Craft rules
+
+Distilled from a careful study of the form (see [CREDITS](CREDITS.md)) and from rendering this kit's own films:
+
+1. **A reaction lands 0–3 frames before its word.** Late feels like a delay, early feels like a prediction.
+2. **The camera never fully stops.** A constant ~0.14 %/frame push is the difference between a hold and a stall.
+3. **Blink in four frames** — half, shut, shut, half — every 0.5–2.3 s, and on every expression change.
+4. **No crushed blacks.** Lift the floor slightly; pure black reads as a dead pixel, not a shadow.
+5. **Time comes from the audio.** Never hand-place a cut you can measure.
+
+## Roadmap
+
+- [ ] Word-level timing from Piper alignments (currently line-level)
+- [ ] A second rigged avatar so casts stop sharing a face
+- [ ] Optional depth-of-field pass (currently faked with fog)
+- [ ] WebM/ProRes output alongside H.264
+
+## Credits
+
+Built by [@apsideslabs](https://github.com/apsideslabs). Adopts techniques from **[mromidev/claude-animated-shorts](https://github.com/mromidev/claude-animated-shorts)** (MIT) — see [`CREDITS.md`](CREDITS.md) for exactly what was taken and why.
+
+Bundled third-party assets: [three.js](https://threejs.org) (MIT), a Ready Player Me sample avatar, [Noto Sans Devanagari](https://fonts.google.com/noto) (OFL), [Piper](https://github.com/rhasspy/piper) voices. Full table in [`NOTICE.md`](NOTICE.md).
+
+## Licence
+
+Code MIT — see [LICENSE](LICENSE). Check the licence of the specific Piper voice you ship.
