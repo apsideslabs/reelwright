@@ -167,6 +167,7 @@ Distilled from a careful study of the form (see [CREDITS](CREDITS.md)) and from 
 3. **Blink in four frames** — half, shut, shut, half — every 0.5–2.3 s, and on every expression change.
 4. **No crushed blacks.** Lift the floor slightly; pure black reads as a dead pixel, not a shadow.
 5. **Time comes from the audio.** Never hand-place a cut you can measure.
+6. **Never pure black.** Lift the floor to a warm (35,19,20) — see [docs/craft.md](docs/craft.md) for the numbers.
 
 ## Roadmap
 
