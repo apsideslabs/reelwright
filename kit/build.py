@@ -6,10 +6,12 @@ build.py — one command to go from a script to a finished vertical video.
 
 Steps (skip any with --steps):
     voice    narration + timings + lip-sync envelope      (kit/voice.py)
-    music    procedural score, mixed under the voice      (kit/music.py)
+    music    procedural score stem                        (kit/music.py)
+    mix      ducking, loudness target, stems, report      (kit/mix.py)
     site     assemble build/<slug>/site and generate timeline.js
     render   headless frames, resumable, chunked          (kit/render.js)
     encode   frames + mix.wav -> mp4                      (kit/encode.py)
+    qa       frame + loudness checks on the result        (kit/qa.py)
 
 Rendering is slow on CPU-only machines (~2-5 s per 1080x1920 frame), so it runs
 in chunks and resumes: kill it, run it again, it continues where it stopped.
@@ -45,6 +47,14 @@ def step_voice(film_path, build, force):
 
 def step_music(film_path, build):
     run([sys.executable, os.path.join(KIT, "music.py"), "--film", film_path, "--build", build], check=True)
+
+
+def step_mix(build, film):
+    audio = film.get("audio", {})
+    run([sys.executable, os.path.join(KIT, "mix.py"), "--build", build,
+         "--target", str(audio.get("target_lufs", -14.0)),
+         "--ceiling", str(audio.get("ceiling_dbtp", -1.5)),
+         "--duck", str(audio.get("duck_db", -3.5))], check=True)
 
 
 def step_site(film_path, build, film):
@@ -130,7 +140,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--film", required=True, help="path to film.json")
     ap.add_argument("--build", help="build directory (default build/<slug>)")
-    ap.add_argument("--steps", default="voice,music,site,render,encode")
+    ap.add_argument("--steps", default="voice,music,mix,site,render,encode,qa")
     ap.add_argument("--force", action="store_true", help="re-synthesise the voice")
     ap.add_argument("--chunk-seconds", type=int, default=280)
     ap.add_argument("--port", type=int, default=8500)
@@ -148,12 +158,18 @@ def main() -> int:
         step_voice(args.film, build, args.force)
     if "music" in steps:
         step_music(args.film, build)
+    if "mix" in steps:
+        step_mix(build, film)
     if "site" in steps:
         step_site(args.film, build, film)
     if "render" in steps:
         step_render(build, film, args.chunk_seconds, args.port, args.query)
     if "encode" in steps:
         step_encode(build, film, os.path.join(build, f"{slug}.mp4"))
+    if "qa" in steps and os.path.exists(os.path.join(build, f"{slug}.mp4")):
+        run([sys.executable, os.path.join(KIT, "qa.py"),
+             "--video", os.path.join(build, f"{slug}.mp4"),
+             "--out", os.path.join(build, "qa"), "--frames", os.path.join(build, "qa")], check=False)
 
     print("done.")
     return 0
