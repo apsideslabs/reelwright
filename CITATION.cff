@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+title: "Reelwright: vertical explainer videos from a script"
+message: "If you use this in teaching or research, cite it as below."
+type: software
+authors:
+  - name: "apsideslabs"
+    website: "https://github.com/apsideslabs"
+repository-code: "https://github.com/apsideslabs/reelwright"
+license: MIT
+version: 1.1.0
+date-released: 2026-11-03
+keywords:
+  - three.js
+  - text-to-speech
+  - procedural-audio
+  - video-pipeline
+  - vertical-video
