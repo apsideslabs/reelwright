@@ -826,6 +826,10 @@ function update(t) {
   updateCust(t);
   const ck = cameraAt(t);
   camera.position.copy(ck.p);
+  // constant slow push-in (~0.14 %/frame): a camera that never fully stops is the
+  // single biggest difference between an amateur hold and a professional one
+  const push = 1 - 0.0014 * ((t * FPS) % 100000);
+  camera.position.lerp(ck.l, 1 - Math.max(0.86, push));
   camera.fov = ck.fov;
   camera.updateProjectionMatrix();
   camera.lookAt(ck.l);
