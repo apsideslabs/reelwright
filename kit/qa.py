@@ -64,6 +64,8 @@ def main() -> int:
     ap.add_argument("--frames", help="also write a contact sheet here")
     ap.add_argument("--allow-black", type=float, default=0.5,
                     help="seconds of black allowed at the head/tail (default 0.5)")
+    ap.add_argument("--ignore", default="",
+                    help="comma-separated checks to tolerate: black,white,pops,peak")
     ap.add_argument("--ffmpeg")
     args = ap.parse_args()
 
@@ -73,6 +75,8 @@ def main() -> int:
     fp = find_ffprobe(ff)
     os.makedirs(args.out, exist_ok=True)
     problems, report = [], []
+    ignore = {x.strip() for x in args.ignore.split(',') if x.strip()}
+    skipped = []
 
     # ---------------- specs ----------------
     dur = 0.0
@@ -160,14 +164,14 @@ def main() -> int:
         pops = [int(i + 1) for i in range(len(diff)) if diff[i] > 3 * med[i] + 1.0]
 
     if black:
-        problems.append(f"{len(black)} near-black frames (first at {black[0]})")
+        (skipped if "black" in ignore else problems).append(f"{len(black)} near-black frames (first at {black[0]})")
     if white:
-        problems.append(f"{len(white)} blown-out frames (first at {white[0]})")
+        (skipped if "white" in ignore else problems).append(f"{len(white)} blown-out frames (first at {white[0]})")
     warnings = []
     if frozen:
         warnings.append(f"{len(frozen)} still runs (first {frozen[0][0]}-{frozen[0][1]}) — a held camera is a choice, but a dead-still shot reads as a stall")
     if pops:
-        problems.append(f"{len(pops)} hard pops (first at {pops[0]})")
+        (skipped if "pops" in ignore else problems).append(f"{len(pops)} hard pops (first at {pops[0]})")
 
     report.append(f"luma mean {mean.mean():.3f} (min {mean.min():.3f}, max {mean.max():.3f}) · saturation {sat.mean():.3f}")
     report.append(f"motion mean {diff.mean():.3f} · black {len(black)} · white {len(white)} · frozen {len(frozen)} · pops {len(pops)}")
@@ -197,6 +201,8 @@ def main() -> int:
     md += [f"- {line}" for line in report]
     if warnings:
         md += ["", "## Warnings", ""] + [f"- {w}" for w in warnings]
+    if skipped:
+        md += ["", "## Tolerated", ""] + [f"- {w} (--ignore)" for w in skipped]
     if problems:
         md += ["", "## Problems", ""] + [f"- {p}" for p in problems]
     open(os.path.join(args.out, "qa-report.md"), "w").write("\n".join(md) + "\n")
