@@ -1,0 +1,9 @@
+build/
+voices/
+node_modules/
+*.wav
+*.mp4
+!films/**/*.mp4
+__pycache__/
+*.pyc
+.DS_Store
