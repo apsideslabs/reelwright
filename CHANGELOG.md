@@ -2,6 +2,16 @@
 
 All notable changes to Reelwright. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning is [SemVer](https://semver.org/).
 
+## [1.2.0] — 2026-11-03
+
+### Added
+- **Grade pass.** `grade` block in `film.json` (`exposure`, `lift`, `vignette`) applied in the capture step: warm black floor via a one-line `lighten` composite, exposure, and a measured vignette. Defaults land the black point on (35,19,20) instead of crushed blue-black.
+- **Four-frame blink** (half, shut, shut, half) replacing a symmetric V.
+- `docs/craft.md` — measured targets for picture, timing, motion and structure, with the numbers to check a frame against.
+
+### Changed
+- Vignette strength is now configurable and defaults lighter (0.42 alpha at the corners, ~0.86 corner/centre).
+
 ## [1.1.0] — 2026-11-03
 
 ### Added
