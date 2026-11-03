@@ -58,6 +58,11 @@ def step_mix(build, film):
 
 
 def step_site(film_path, build, film):
+    for need in ("timings.json", "envelope.json"):
+        if not os.path.exists(os.path.join(build, need)):
+            raise SystemExit(
+                f"missing {need} in {build} — the site step needs the voice step first.\n"
+                f"Run:  python kit/build.py --film {film_path} --steps voice,music,mix,site")
     site = os.path.join(build, "site")
     os.makedirs(site, exist_ok=True)
 
