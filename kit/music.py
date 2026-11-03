@@ -142,6 +142,7 @@ def main() -> int:
     right += rng.randn(n_total) * 0.0025
 
     spec = film.get("music", {})
+    fired = []
     for cue in spec.get("cues", []):
         at = cue["at"]
         if at not in timings["lines"] and at not in timings:
@@ -166,30 +167,22 @@ def main() -> int:
             except TypeError:
                 sig = inst(amp=amp)
             add(sig, t, pan + 0.06 * k, gain)
+            fired.append({"t": round(t, 3), "inst": cue.get("inst", "pluck"), "note": note})
 
     music = np.stack([left, right], axis=1)
     music = music / (np.max(np.abs(music)) + 1e-9) * float(spec.get("bed_gain", 0.42))
 
-    w = wave.open(os.path.join(args.build, "narration.wav"))
-    nar = np.frombuffer(w.readframes(w.getnframes()), dtype="<i2").astype(np.float32) / 32768.0
-    w.close()
-    nar = np.pad(nar, (0, max(0, n_total - len(nar))))[:n_total]
-
-    mix = music + nar[:, None]
-    mix = mix / (np.max(np.abs(mix)) + 1e-9) * 1.04
-    mix = np.tanh(mix * 1.05) / np.tanh(1.05) * 0.93
-    fi = int(0.05 * SR)
-    mix[:fi] *= np.linspace(0, 1, fi)[:, None]
-    fo = int(0.7 * SR)
-    mix[-fo:] *= np.linspace(1, 0, fo)[:, None]
-
-    with wave.open(os.path.join(args.build, "mix.wav"), "wb") as f:
+    # score stem only — voice is added (and ducked) in kit/mix.py
+    pcm = (np.clip(music, -1, 1) * 32767).astype("<i2")
+    with wave.open(os.path.join(args.build, "music.wav"), "wb") as f:
         f.setnchannels(2)
         f.setsampwidth(2)
         f.setframerate(SR)
-        f.writeframes((np.clip(mix, -1, 1) * 32767).astype("<i2").tobytes())
+        f.writeframes(pcm.tobytes())
 
-    print(f"  mix.wav  {len(mix) / SR:.2f}s  peak {float(np.max(np.abs(mix))):.2f}")
+    cues_path = os.path.join(args.build, "cues.json")
+    json.dump(fired, open(cues_path, "w"), ensure_ascii=False, indent=1)
+    print(f"  music.wav  {len(music) / SR:.2f}s  {len(fired)} cues  ->  cues.json")
     return 0
 
 
