@@ -1,5 +1,5 @@
 {
-  "name": "vertical-explainer-kit",
+  "name": "reelwright",
   "version": "1.0.0",
   "private": true,
   "description": "Narrated vertical 3D explainer videos from a JSON script: Piper TTS + three.js + ffmpeg",
