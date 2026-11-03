@@ -6,6 +6,15 @@
     1080,
     1920
   ],
+  "grade": {
+    "exposure": 1.28,
+    "lift": [
+      35,
+      19,
+      20
+    ],
+    "vignette": 0.42
+  },
   "voice": {
     "model": "hi_IN-pratham-medium",
     "length_scale": 1.09,
@@ -311,5 +320,10 @@
         ]
       }
     ]
+  },
+  "audio": {
+    "target_lufs": -14.0,
+    "ceiling_dbtp": -1.5,
+    "duck_db": -3.5
   }
 }
