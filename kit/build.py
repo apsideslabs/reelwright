@@ -150,6 +150,7 @@ def main() -> int:
     ap.add_argument("--chunk-seconds", type=int, default=280)
     ap.add_argument("--port", type=int, default=8500)
     ap.add_argument("--query", default="", help="extra page query, e.g. w=540&h=960 for quick tests")
+    ap.add_argument("--qa-ignore", default="", help="checks QA should tolerate, e.g. pops")
     args = ap.parse_args()
 
     film = json.load(open(args.film, encoding="utf-8"))
@@ -174,7 +175,8 @@ def main() -> int:
     if "qa" in steps and os.path.exists(os.path.join(build, f"{slug}.mp4")):
         run([sys.executable, os.path.join(KIT, "qa.py"),
              "--video", os.path.join(build, f"{slug}.mp4"),
-             "--out", os.path.join(build, "qa"), "--frames", os.path.join(build, "qa")], check=False)
+             "--out", os.path.join(build, "qa"), "--frames", os.path.join(build, "qa"),
+             "--ignore", args.qa_ignore], check=False)
 
     print("done.")
     return 0
