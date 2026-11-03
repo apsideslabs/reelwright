@@ -34,6 +34,7 @@ Reelwright turns a written script into a narrated 9:16 film: a TTS voice measure
 - [How it works](#how-it-works)
 - [The script format](#the-script-format)
 - [Styles](#styles)
+- [Safe areas](#safe-areas)
 - [Performance](#performance)
 - [Quality control](#quality-control)
 - [Project layout](#project-layout)
@@ -65,6 +66,12 @@ pip install -r requirements.txt && npm install          # puppeteer-core
 ./new-film.sh my-film                                   # scaffold from the worked example
 $EDITOR films/my-film/film.json                         # your script, graphics, music
 python kit/build.py --film films/my-film/film.json      # -> build/my-film/my-film.mp4
+```
+
+Prove the whole chain works, in about two minutes:
+
+```bash
+make test     # builds a 3-line film end to end at low res — 14 checks
 ```
 
 Preview in seconds instead of an hour:
@@ -135,6 +142,16 @@ One flag changes the whole look:
 ```
 
 Toon mode swaps every material for `MeshToonMaterial` and renders through three.js's `OutlineEffect` — the flat-colour-plus-ink look most animated shorts are built from. Screen-space `fx` cues (`impact`, `sparkle`) punch beats on top. Details and tuning in [`docs/styles.md`](docs/styles.md).
+
+## Safe areas
+
+Vertical platforms paint their interface over your video. Reelwright lays every graphic inside the box TikTok, Reels and Shorts all leave clear — **x 120–880, y 290–1240** on a 1080×1920 frame — because before 1.4 the last two steps of a six-step checklist sat under TikTok's caption block.
+
+```jsonc
+{ "safeArea": "all" }   // all | tiktok | reels | shorts | none
+```
+
+Check any frame with `?safe=1` on the render URL; details and the pixel table in [`docs/safe-areas.md`](docs/safe-areas.md).
 
 ## Performance
 
