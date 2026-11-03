@@ -33,6 +33,7 @@ Reelwright turns a written script into a narrated 9:16 film: a TTS voice measure
 - [Quickstart](#quickstart)
 - [How it works](#how-it-works)
 - [The script format](#the-script-format)
+- [Styles](#styles)
 - [Performance](#performance)
 - [Quality control](#quality-control)
 - [Project layout](#project-layout)
@@ -52,6 +53,7 @@ Making a decent explainer normally means an editor, a voice artist, a stock subs
 | Rig a character in Blender | A rigged avatar posed bone-by-bone in code, lip-synced from the narration |
 | Animate titles in After Effects | Motion graphics drawn in Canvas 2D at 1080×1920, in the same pass |
 | Export and hope | `qa.py` checks every frame for black, blown, frozen and pop frames, plus loudness |
+| Pick a look in a render engine | `"style": "toon"` gives cel shading + ink outlines; `"real"` gives lit surfaces |
 
 ## Quickstart
 
@@ -122,6 +124,17 @@ Everything a film needs lives in one file — narration, scene beats, on-screen 
   }
 }
 ```
+
+## Styles
+
+One flag changes the whole look:
+
+```jsonc
+{ "style": "toon" }   // cel shading, four-step ramp, inverted-hull ink outlines
+{ "style": "real" }   // lit surfaces, soft shading (default)
+```
+
+Toon mode swaps every material for `MeshToonMaterial` and renders through three.js's `OutlineEffect` — the flat-colour-plus-ink look most animated shorts are built from. Screen-space `fx` cues (`impact`, `sparkle`) punch beats on top. Details and tuning in [`docs/styles.md`](docs/styles.md).
 
 ## Performance
 
