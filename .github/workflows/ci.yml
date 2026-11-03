@@ -1,0 +1,41 @@
+name: ci
+
+on:
+  push: { branches: [main] }
+  pull_request:
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - name: Python syntax
+        run: python -m py_compile kit/*.py
+      - name: JavaScript syntax
+        run: node --check kit/render.js
+      - name: film.json files parse
+        run: |
+          python - <<'PY'
+          import glob, json
+          for f in glob.glob("films/*/film.json") + glob.glob("templates/film.json"):
+              json.load(open(f, encoding="utf-8"))
+              print("ok", f)
+          PY
+      - name: Every beat points at a real line
+        run: |
+          python - <<'PY'
+          import glob, json, sys
+          bad = 0
+          for f in glob.glob("films/*/film.json"):
+              film = json.load(open(f, encoding="utf-8"))
+              ids = {l["id"] for l in film["lines"]}
+              for beat, line in film.get("beats", {}).items():
+                  if line not in ids:
+                      print(f"::error file={f}::{beat} -> {line} is not a line id")
+                      bad = 1
+          sys.exit(bad)
+          PY
