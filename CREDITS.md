@@ -1,5 +1,7 @@
 # Credits
 
+For the full ledger, including what is ours, what is borrowed and what we deliberately did not take, see [PROVENANCE.md](PROVENANCE.md).
+
 ## Techniques adopted from mromidev/claude-animated-shorts
 
 [mromidev/claude-animated-shorts](https://github.com/mromidev/claude-animated-shorts) (MIT) is a Claude skill for a different art style, 2D ink-outlined cartoon characters inside a painted 3D world, rendered with three.js inside Remotion. It solves a different problem well, and four of its ideas are better than what this kit had:
