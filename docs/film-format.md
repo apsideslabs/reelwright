@@ -1,92 +1,160 @@
 # film.json reference
 
-One file describes a film. Everything the build needs comes from here.
+One file describes a film. Everything the build needs comes from here — narration, timing, on-screen graphics, the score, the grade and the look.
+
+`kit/make.py` writes one for you; this page is what to edit afterwards, and what every field means.
 
 ```jsonc
 {
-  "slug": "my-film",              // used for the build directory and the mp4 name
-  "title": "My Film",             // human label, printed by the build
-  "fps": 24,                      // 24 for a filmic feel, 30 for social-native
-  "size": [1080, 1920],           // 9:16. 720x1280 also works and renders ~2x faster
-
-  "voice": {
-    "model": "hi_IN-pratham-medium",  // any Piper voice id; downloaded automatically
-    "length_scale": 1.09,             // >1 = slower delivery
-    "pitch": 0.955,                   // <1 = deeper (and slightly slower still)
-    "noise_scale": 0.6,               // lower = flatter, more even read
-    "noise_w": 0.72,                  // lower = less expressive timing
-    "gain": 0.85
-  },
-  "lead": 1.3,   // silence before the first line, seconds
-  "gap": 0.52,   // silence between lines
-  "tail": 1.2,   // silence after the last line
-
-  "lines": [
-    { "id": "l1", "text": "First line of narration." },
-    { "id": "l2", "text": "Second line." }
-  ],
-
-  // map scene keys to line ids — the scene timeline is built from these
-  "beats": {
-    "s2": "l2",
-    "s3": "l3"
-  },
-
-  "graphics": { /* see below */ },
-  "music":    { /* see below */ }
+  "schema": 1,
+  "slug": "my-film",
+  "title": "My Film",
+  "fps": 24,
+  "size": [1080, 1920],
+  "style": "toon",
+  "safeArea": "all",
+  "captions": true,
+  "grade": { "exposure": 1.28, "lift": [35, 19, 20], "vignette": 0.42 },
+  "voice": { "model": "en_US-lessac-medium", "length_scale": 1.06, "pitch": 0.97 },
+  "lead": 1.2, "gap": 0.42, "tail": 1.0,
+  "lines": [ { "id": "l1", "text": "Say this first." } ],
+  "beats": { "s2": "l2", "s3": "l3" },
+  "graphics": { "title": { "heading": "MY FILM" } },
+  "fx": [ { "at": "l2", "kind": "sparkle", "count": 12 } ],
+  "music": { "bed_gain": 0.4, "cues": [] },
+  "audio": { "target_lufs": -14, "ceiling_dbtp": -1.5, "duck_db": -3.5 }
 }
 ```
+
+Every field except `lines` has a default. Unknown fields are ignored, so a newer film still builds on an older kit — until the `schema` says otherwise.
+
+## Top level
+
+| Field | Type | Default | Meaning |
+|---|---|---|---|
+| `schema` | int | `1` | Format version. `build.py` refuses a film **newer** than it understands rather than mis-rendering it. |
+| `slug` | string | filename | Build directory and output filename. |
+| `title` | string | `slug` | Human label, printed by the build. Not drawn on screen. |
+| `fps` | int | `24` | 24 for a filmic feel, 30 for social-native. |
+| `size` | `[w, h]` | `[1080, 1920]` | 9:16. 720×1280 renders ~2× faster; see [speed](speed.md). |
+
+## Look
+
+| Field | Type | Default | Meaning |
+|---|---|---|---|
+| `style` | `"toon"` \| `"real"` | `"real"` | `toon` = cel shading + ink outlines. See [styles](styles.md). |
+| `safeArea` | `"all"` \| `"tiktok"` \| `"reels"` \| `"shorts"` \| `"none"` | `"all"` | Keeps graphics out of the platform UI. See [safe areas](safe-areas.md). |
+| `captions` | bool | `true` | Burn the narration in as subtitles, word-wrapped inside the safe area. |
+| `captionSize` | number | `44` | Caption size in 1080×1920 units. |
+| `grade.exposure` | number | `1.28` | Renderer exposure. Raise until a mid-shot's luma sits near 0.5. |
+| `grade.lift` | `[r,g,b]` | `[35, 19, 20]` | Black point. Never `[0,0,0]` — crushed black reads as a dead pixel. |
+| `grade.vignette` | number | `0.42` | Corner darkening alpha. ~0.86 corner÷centre is the measured target. |
+
+## Voice and pacing
+
+| Field | Type | Default | Meaning |
+|---|---|---|---|
+| `voice.model` | string | language default | Any Piper voice id, e.g. `hi_IN-pratham-medium`. |
+| `voice.length_scale` | number | `1.06` | >1 is slower. 1.0 is the model's natural pace. |
+| `voice.pitch` | number | `0.97` | Resample factor: <1 is deeper and slightly slower. |
+| `voice.gain` | number | `0.85` | Pre-mix level. Loudness is normalised later, so this only matters relative to music. |
+| `lead` | seconds | `1.2` | Silence before the first line. |
+| `gap` | seconds | `0.42` | Silence between lines. |
+| `tail` | seconds | `1.0` | Silence after the last line. |
+
+**Nothing downstream contains a timestamp.** Every cut, card and camera move is derived from the measured speech, so changing `length_scale` re-times the whole film.
 
 ## `lines`
 
-`id` is any string; the scene refers to beats by line id. `text` is spoken verbatim. Write for the ear: short sentences, full stops where you want a pause. The Hindi example runs ~8 s for a 20-word line, so budget **roughly 2.5 words per second**.
+The script. Each entry becomes one spoken clip, one caption and one beat.
+
+```jsonc
+"lines": [
+  { "id": "l1", "text": "Everyone said the shop was finished." },
+  { "id": "l2", "text": "Then one question changed everything." }
+]
+```
+
+Keep ids stable: `beats` reference them. If you add a line, add matching beats.
 
 ## `beats`
 
-Maps the scene's named moments (`s2`…`s14` by convention, `s1` is always 0) to the line that starts them. `build.py` writes these into `timeline.js` as `T.s2`, `T.s3`, … using the *measured* start time of that line. Your scene code then writes `T.s4` instead of a magic number.
+Maps scene keys to lines. The scene reads `T.s2` … `T.s14` — a beat is simply *the moment this line starts*, so a film with three lines can map several beats to the same line.
+
+```jsonc
+"beats": { "s2": "l2", "s3": "l3", "s4": "l3" }
+```
+
+`T.s1` is always 0. The build refuses a beat pointing at a line id that does not exist.
 
 ## `graphics`
 
-Every on-screen word. All fields are optional — omit a block and that graphic simply never appears.
+Every on-screen panel. Each block is optional — omit it and that panel simply never draws.
+
+| Key | Fields | When it shows |
+|---|---|---|
+| `title` | `heading`, `sub`, `accent`, `size`, `subSize` | 0.6 s in, for ~4 s |
+| `steps` | array of `{n, label, color}` | from `T.s4`, one lit per beat |
+| `question` | `label`, `lines[]`, `accent`, `size` | around `T.s3` |
+| `proof` | `stars`, `lines[]`, `foot`, `accent` | around `T.s7` |
+| `cost` | `line1`, `line2`, `foot`, `accent` | around `T.s12` |
+| `sold` | `label` | around `T.s13` |
+| `end` | `line1`, `line2`, `foot`, `accent` | final beat |
+
+Text auto-fits its panel. All of it is drawn in Canvas 2D at 1080×1920 and scaled to the output size, so it stays sharp at any resolution.
+
+## `fx`
+
+Screen-space cartoon effects, anchored to a line id or beat key.
 
 ```jsonc
-"graphics": {
-  "title":    { "heading": "...", "sub": "...", "accent": "#e8b64c", "size": 72 },
-  "question": { "label": "सवाल", "lines": ["line one", "line two"], "accent": "#e8b64c" },
-  "steps":    [ { "n": "1", "label": "Problem", "color": "#e0574a" } ],
-  "proof":    { "stars": "★★★★★", "lines": ["quote"], "foot": "1,240 customers", "accent": "#5ab86a" },
-  "cost":     { "line1": "2 hours × 365", "line2": "= 730 hours", "foot": "cost of waiting", "accent": "#e0574a" },
-  "sold":     { "label": "SOLD" },
-  "end":      { "line1": "Sell the outcome", "line2": "not the product", "foot": "problem · … · close" }
-}
+"fx": [
+  { "at": "l3",  "offset": 2.2, "kind": "impact",  "x": 0.5, "y": 0.40, "dur": 0.55 },
+  { "at": "l13", "offset": 2.6, "kind": "sparkle", "count": 14, "dur": 0.9, "color": "#ffe08a" }
+]
 ```
 
-The HUD draws any script the browser font can render — Devanagari, Latin, Tamil. See `docs/customising.md` for swapping the font.
+| Field | Default | Meaning |
+|---|---|---|
+| `at` | — | line id or beat key |
+| `offset` | `0` | seconds after that anchor |
+| `kind` | — | `impact` (ring + ticks) or `sparkle` (radiating stars) |
+| `x`, `y` | `0.5`, `0.45` | position as a fraction of the frame |
+| `dur` | `0.6` | seconds |
+| `count`, `scale`, `seed`, `color` | — | appearance |
 
 ## `music`
 
-A list of cues. Each cue is placed at a line id (plus optional `offset`) and either fires once or repeats.
+A score described as cues, synthesised from sine waves — no samples, no licensing.
 
 ```jsonc
 "music": {
-  "bed_gain": 0.42,          // overall music level under the voice
+  "bed_gain": 0.42,
   "cues": [
-    { "at": "l1",  "inst": "pad",   "note": "C3", "dur": 9, "gain": 1.0 },
-    { "at": "l1",  "inst": "pluck", "offset": 0.3, "every": 1.15, "count": 6,
-                   "notes": ["C4","E4","G4","C5","G4","E4"] },
-    { "at": "l5",  "inst": "pop",   "every": 0.68, "count": 6 },
-    { "at": "l13", "inst": "coin",  "offset": 2.5 }
+    { "at": "l1", "inst": "pad",   "note": "C3", "dur": 9 },
+    { "at": "l1", "inst": "pluck", "every": 1.15, "count": 6 },
+    { "at": "l13", "inst": "coin", "offset": 2.5 }
   ]
 }
 ```
 
-| field | meaning |
-|---|---|
-| `at` | line id (or `s2`-style beat key) to anchor the cue |
-| `offset` | seconds after that anchor |
-| `inst` | `pad`, `pluck`, `bell`, `pop`, `whoosh`, `coin` |
-| `note` / `notes` | scientific pitch (`C4`, `F#3`); `notes` cycles per repetition |
-| `every` / `count` | repeat interval and how many times |
-| `dur`, `gain`, `amp`, `pan` | length, level, accent, stereo position (-1…1) |
+Instruments: `pad`, `pluck`, `bell`, `pop`, `whoosh`, `coin`. A cue fires at its anchor plus `offset`; with `every` and `count` it repeats, and `notes[]` cycles a phrase.
 
-Note names use A4 = 440 Hz. If a cue points at an unknown key the build warns and skips it rather than failing.
+## `audio`
+
+| Field | Default | Meaning |
+|---|---|---|
+| `target_lufs` | `-14` | Integrated loudness. −14 suits Reels/Shorts, −16 podcast, −23 broadcast. |
+| `ceiling_dbtp` | `-1.5` | True-peak ceiling. |
+| `duck_db` | `-3.5` | How far the score dips under speech. |
+
+The ducking envelope is measured from the narration itself, so it re-times when the script changes.
+
+## Validating
+
+```bash
+python kit/doctor.py                       # every film parses
+python kit/build.py --film films/x/film.json --steps site   # catches bad beats
+```
+
+CI runs the same checks on every push.
