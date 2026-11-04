@@ -1,7 +1,7 @@
 FILM ?= films/kuch-bhi-kaise-bechein/film.json
 SLUG ?= $(shell basename $(dir $(FILM)))
 
-.PHONY: help voice site preview render encode qa test all clean
+.PHONY: help doctor voice site preview render encode qa test all clean
 
 help:
 	@echo "make site     generate timeline + assemble the render site"
@@ -31,6 +31,9 @@ encode:
 
 qa:
 	python3 kit/qa.py --video build/$(SLUG)/$(SLUG).mp4 --out build/$(SLUG)/qa --frames build/$(SLUG)/qa
+
+doctor:
+	python3 kit/doctor.py
 
 test:
 	python3 kit/selftest.py
