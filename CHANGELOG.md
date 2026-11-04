@@ -2,6 +2,18 @@
 
 All notable changes to Reelwright. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning is [SemVer](https://semver.org/).
 
+## [1.7.0] — 2026-11-04
+
+### Added
+- **Graphics backend chain with automatic fallback**: hardware → Mesa llvmpipe (`--use-angle=gl`, ~4× faster than SwiftShader on CPU-only Linux) → SwiftShader. The scene initialises on the first backend that works; the winner is cached in `.cache/backend.json`. Pin with `--backend=`, forbid hardware with `--gpu 0`.
+- **`kit/doctor.py` / `make doctor`** — OS, architecture, runtimes, Chromium, GPU, Mesa, display, ffmpeg, Python packages, voice models, and whether every film parses. Non-zero exit on failure.
+- **`docs/portability.md`** — the four seams (film.json, narration+timings, scene.js, frames+mix), how to replace each, what is guaranteed and what is not.
+- `"schema": 1` on `film.json`; `build.py` refuses a newer schema instead of mis-rendering it.
+- `.github/dependabot.yml` — weekly dependency PRs, CI-checked.
+
+### Changed
+- `render.js` reports the backend and the actual GL renderer string on every run, so a silent software fallback is visible in the first two lines of the log.
+
 ## [1.6.0] — 2026-11-04
 
 ### Added
