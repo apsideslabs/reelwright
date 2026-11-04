@@ -60,12 +60,20 @@ Making a decent explainer normally means an editor, a voice artist, a stock subs
 
 ```bash
 git clone https://github.com/apsideslabs/reelwright && cd reelwright
-pip install -r requirements.txt && npm install          # puppeteer-core
-# Chromium must be on PATH, or set CHROME=/path/to/chromium
+./setup.sh                                              # python + node + chromium check
 
-./new-film.sh my-film                                   # scaffold from the worked example
-$EDITOR films/my-film/film.json                         # your script, graphics, music
-python kit/build.py --film films/my-film/film.json      # -> build/my-film/my-film.mp4
+python kit/make.py "Everyone said the shop was finished. Then one question changed everything."
+# -> everyone-said-the-shop-was-finished.mp4
+```
+
+That is the whole beginner path: words in, vertical video out, captions and voice included. **[START-HERE.md](START-HERE.md)** is the one-page version.
+
+Want control? `make.py` writes a plain `film.json` you can edit and rebuild:
+
+```bash
+python kit/make.py myscript.txt --lang hi --style toon --steps "Problem,Solution,Proof"
+$EDITOR films/my-story/film.json                        # lines, colours, music cues
+python kit/build.py --film films/my-story/film.json
 ```
 
 Prove the whole chain works, in about two minutes:
