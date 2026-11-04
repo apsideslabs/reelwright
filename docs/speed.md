@@ -18,14 +18,14 @@ Cost is close to linear in pixel count, plus a small fixed overhead per frame (~
 
 ## The levers, best first
 
-**1. Use a GPU — 20–50× if you have one.** `render.js` detects `/dev/dri` and switches automatically; the first line of the render log says which path it took.
+**1. Use a GPU, 20–50× if you have one.** `render.js` detects `/dev/dri` and switches automatically; the first line of the render log says which path it took.
 
 ```
   renderer: GPU (hardware)          # good
   renderer: SwiftShader (software)  # 20-50x slower
 ```
 
-Force it either way with `--gpu 1` / `--gpu 0`. On a laptop with integrated graphics this alone turns an hour into a couple of minutes. *The 20–50× figure is the usual range for this workload — it is not measured here, because this machine has no GPU.*
+Force it either way with `--gpu 1` / `--gpu 0`. On a laptop with integrated graphics this alone turns an hour into a couple of minutes. *The 20–50× figure is the usual range for this workload, it is not measured here, because this machine has no GPU.*
 
 **2. Render smaller.** `--draft` gives 540×960 at 20 fps: about 4× faster, soft but perfectly good for checking timing and wording.
 
@@ -36,7 +36,7 @@ python kit/make.py script.txt              # full 1080p
 
 **3. Fewer frames.** 20 fps instead of 24 is 17% fewer frames and reads fine for a talking-head explainer.
 
-**4. Parallel workers — only if you have spare cores.**
+**4. Parallel workers, only if you have spare cores.**
 
 ```bash
 python kit/make.py script.txt --workers 4   # on an 8-core machine
@@ -44,7 +44,7 @@ python kit/make.py script.txt --workers 4   # on an 8-core machine
 
 On the 2-core test box two workers were *slower* than one: SwiftShader already uses every core it can get, so a second browser just makes them fight. A rough rule: one worker per 2 cores, and never more workers than cores ÷ 2.
 
-**5. Make the scene cheaper.** Shadows and MSAA are already off by default — together they cost ~45%. The toon outline pass is nearly free (the outline material is cheap). A scene with fewer lights and fewer overlapping transparent surfaces renders faster.
+**5. Make the scene cheaper.** Shadows and MSAA are already off by default, together they cost ~45%. The toon outline pass is nearly free (the outline material is cheap). A scene with fewer lights and fewer overlapping transparent surfaces renders faster.
 
 ## What does not help
 
@@ -54,4 +54,4 @@ On the 2-core test box two workers were *slower* than one: SwiftShader already u
 
 ## Checking where you are
 
-The render prints progress as it goes, and it is resumable — stop it, start it again, it continues from the last frame on disk. Nothing is lost.
+The render prints progress as it goes, and it is resumable, stop it, start it again, it continues from the last frame on disk. Nothing is lost.
