@@ -77,9 +77,11 @@ const SAFE_PRESETS = {
 const SAFE_NAME = FILM.safeArea || 'all';
 const _sp = SAFE_PRESETS[SAFE_NAME] || SAFE_PRESETS.all;
 const K = CH / 1920;                       // scale factor for other output heights
+// Safe area is authored in native 1080x1920 units; drawHUD sets a transform so
+// every HUD number below is resolution-independent.
 const SAFE = {
-  x0: _sp.left * K, x1: CW - _sp.right * K,
-  y0: _sp.top * K, y1: CH - _sp.bottom * K
+  x0: _sp.left, x1: 1080 - _sp.right,
+  y0: _sp.top, y1: 1920 - _sp.bottom
 };
 SAFE.w = SAFE.x1 - SAFE.x0;
 SAFE.h = SAFE.y1 - SAFE.y0;
@@ -581,8 +583,21 @@ const HUD_STEPS = [
   { n: '5', t: 'ऑफ़र', c: '#4a9be0' }, { n: '6', t: 'क्लोज़', c: '#9a6ae0' }
 ];
 
+// shrink text until it fits — a title the user typed should never overflow
+function fitFont(g, text, maxW, baseSize, weight = 700, family = 'Deva, serif') {
+  let size = baseSize;
+  for (let i = 0; i < 40; i++) {
+    g.font = `${weight} ${size}px ${family}`;
+    if (g.measureText(text).width <= maxW || size <= 18) break;
+    size -= Math.max(1, Math.round(size * 0.06));
+  }
+  return size;
+}
+
 function drawHUD(t, g) {
-  const W = CW, H = CH;
+  const W = 1080, H = 1920;
+  g.save();
+  g.setTransform(CW / 1080, 0, 0, CH / 1920, 0, 0);
   const G = FILM.graphics || {};
   g.textBaseline = 'middle';
 
@@ -593,13 +608,15 @@ function drawHUD(t, g) {
     if (a > 0 && out < 1) {
       g.save(); g.globalAlpha = ease(a) * (1 - ease(out));
       const y = SAFE.y0 + SAFE.h * 0.18 - (1 - ease(a)) * 40;
-      panel(g, SAFE.x0, y, SAFE.w, 280 * K, ti.accent || '#e8b64c');
+      panel(g, SAFE.x0, y, SAFE.w, 280, ti.accent || '#e8b64c');
       g.fillStyle = ti.accent || '#e8b64c'; g.fillRect(SAFE.x0 + 26, y + 40, 7, 200);
       g.textAlign = 'left';
-      g.fillStyle = '#f6e6c2'; g.font = `700 ${ti.size || 72}px Deva, serif`;
+      g.fillStyle = '#f6e6c2';
+      fitFont(g, ti.heading, SAFE.w - 120, (ti.size || 72));
       g.fillText(ti.heading, SAFE.x0 + 62, y + 108);
       if (ti.sub) {
-        g.fillStyle = '#9fb6c4'; g.font = `400 ${ti.subSize || 38}px Deva, serif`;
+        g.fillStyle = '#9fb6c4';
+        fitFont(g, ti.sub, SAFE.w - 120, (ti.subSize || 38), 400);
         g.fillText(ti.sub, SAFE.x0 + 62, y + 190);
       }
       g.restore();
@@ -613,7 +630,7 @@ function drawHUD(t, g) {
     if (a > 0 && out < 1) {
       g.save(); g.globalAlpha = ease(a) * (1 - ease(out));
       const y = SAFE.y0 + SAFE.h * 0.28 + (1 - ease(a)) * 30;
-      panel(g, SAFE.x0, y, SAFE.w, 250 * K, q.accent || '#e8b64c');
+      panel(g, SAFE.x0, y, SAFE.w, 250, q.accent || '#e8b64c');
       g.textAlign = 'center';
       if (q.label) {
         g.fillStyle = q.accent || '#e8b64c'; g.font = '400 34px Deva, serif';
@@ -638,7 +655,7 @@ function drawHUD(t, g) {
     const lit = t > STEP_T(i);
     const pulse = (t > STEP_T(i) && t < STEP_T(i) + 0.55)
       ? 1 + 0.06 * Math.sin(sg(t, STEP_T(i), STEP_T(i) + 0.55) * Math.PI) : 1;
-    const h = Math.round(104 * K), gap = Math.round(14 * K);
+    const h = 104, gap = 14;
     const x = SAFE.x0, w = SAFE.w;
     const totalH = 6 * h + 5 * gap;
     const y = SAFE.y0 + (SAFE.h - totalH) / 2 + i * (h + gap);
@@ -663,7 +680,7 @@ function drawHUD(t, g) {
     if (a > 0 && out < 1) {
       g.save(); g.globalAlpha = ease(a) * (1 - ease(out));
       const y = SAFE.y0 + SAFE.h * 0.32 + (1 - ease(a)) * 30;
-      panel(g, SAFE.x0 + 10 * K, y, SAFE.w - 20 * K, 330 * K, pf.accent || '#5ab86a');
+      panel(g, SAFE.x0 + 10, y, SAFE.w - 20, 330, pf.accent || '#5ab86a');
       g.textAlign = 'center';
       if (pf.stars) { g.fillStyle = '#8ef0a8'; g.font = '700 46px Deva, serif'; g.fillText(pf.stars, W / 2, y + 66); }
       g.fillStyle = '#f6e6c2'; g.font = '400 42px Deva, serif';
@@ -680,7 +697,7 @@ function drawHUD(t, g) {
     if (a > 0 && out < 1) {
       g.save(); g.globalAlpha = ease(a) * (1 - ease(out));
       const y = SAFE.y0 + SAFE.h * 0.36 + (1 - ease(a)) * 30;
-      panel(g, SAFE.x0 + 10 * K, y, SAFE.w - 20 * K, 300 * K, cs.accent || '#e0574a', 'rgba(30,10,14,0.95)');
+      panel(g, SAFE.x0 + 10, y, SAFE.w - 20, 300, cs.accent || '#e0574a', 'rgba(30,10,14,0.95)');
       g.textAlign = 'center';
       g.fillStyle = '#ffd9c9'; g.font = '700 50px Deva, serif'; g.fillText(cs.line1, W / 2, y + 92);
       g.fillStyle = '#ff7a66'; g.font = '700 62px Deva, serif'; g.fillText(cs.line2, W / 2, y + 176);
@@ -712,11 +729,49 @@ function drawHUD(t, g) {
     if (a > 0) {
       g.save(); g.globalAlpha = ease(a);
       const y = SAFE.y0 + SAFE.h * 0.22 + (1 - ease(a)) * 30;
-      panel(g, SAFE.x0, y, SAFE.w, 360 * K, ec.accent || '#e8b64c');
+      panel(g, SAFE.x0, y, SAFE.w, 360, ec.accent || '#e8b64c');
       g.textAlign = 'center';
       g.fillStyle = '#f6e6c2'; g.font = '700 66px Deva, serif'; g.fillText(ec.line1, W / 2, y + 108);
       g.fillStyle = ec.accent || '#e8b64c'; g.font = '700 66px Deva, serif'; g.fillText(ec.line2, W / 2, y + 188);
       if (ec.foot) { g.fillStyle = '#9fb6c4'; g.font = '400 30px Deva, serif'; g.fillText(ec.foot, W / 2, y + 282); }
+      g.restore();
+    }
+  }
+
+  // ---- captions: the narration itself, timed to the voice ----
+  // Works with zero configuration: any film with lines gets readable captions.
+  if (FILM.captions !== false) {
+    const cur = Object.entries(LINES).find(([id, L]) => t >= L.start - 0.05 && t <= L.start + L.dur + 0.35);
+    if (cur) {
+      const [, L] = cur;
+      const text = (FILM.lines.find(l => l.id === cur[0]) || {}).text || '';
+      const fade = Math.min(1, sg(t, L.start - 0.05, L.start + 0.12)) * (1 - sg(t, L.start + L.dur + 0.1, L.start + L.dur + 0.35));
+      const size = Math.round((FILM.captionSize || 44));
+      g.save();
+      g.globalAlpha = fade;
+      g.font = `600 ${size}px Deva, sans-serif`;
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      const maxW = SAFE.w - 20;
+      const words = text.split(/\s+/);
+      const lines = [];
+      let line = '';
+      for (const w of words) {
+        const test = line ? line + ' ' + w : w;
+        if (g.measureText(test).width > maxW && line) { lines.push(line); line = w; }
+        else line = test;
+      }
+      if (line) lines.push(line);
+      const lh = size * 1.35;
+      const blockH = lines.length * lh;
+      const baseY = SAFE.y1 - blockH / 2 - 18;
+      lines.forEach((ln, i) => {
+        const y = baseY + i * lh;
+        g.lineWidth = size * 0.16; g.strokeStyle = 'rgba(8,10,16,0.92)';
+        g.strokeText(ln, (SAFE.x0 + SAFE.x1) / 2, y);
+        g.fillStyle = '#ffffff';
+        g.fillText(ln, (SAFE.x0 + SAFE.x1) / 2, y);
+      });
       g.restore();
     }
   }
@@ -767,9 +822,9 @@ function drawHUD(t, g) {
 
   // ---- progress bar ----
   const pr = Math.min(1, t / DUR);
-  const barY = SAFE.y0 - 14 * K;
-  g.fillStyle = 'rgba(255,255,255,0.12)'; g.fillRect(SAFE.x0, barY, SAFE.w, 5 * K);
-  g.fillStyle = '#e8b64c'; g.fillRect(SAFE.x0, barY, SAFE.w * pr, 5 * K);
+  const barY = SAFE.y0 - 14;
+  g.fillStyle = 'rgba(255,255,255,0.12)'; g.fillRect(SAFE.x0, barY, SAFE.w, 5);
+  g.fillStyle = '#e8b64c'; g.fillRect(SAFE.x0, barY, SAFE.w * pr, 5);
 
   // ?safe=1 draws the platform UI zones so you can check a frame
   if (DEBUG_SAFE) {
@@ -785,6 +840,7 @@ function drawHUD(t, g) {
     g.fillText(`safe: ${SAFE_NAME}  x ${Math.round(SAFE.x0)}-${Math.round(SAFE.x1)}  y ${Math.round(SAFE.y0)}-${Math.round(SAFE.y1)}`, SAFE.x0 + 8, SAFE.y0 + 34);
     g.restore();
   }
+  g.restore();
 }
 
 // ---------------- camera ----------------
