@@ -80,7 +80,8 @@ const server = http.createServer((req, res) => {
 (async () => {
   await new Promise(r => server.listen(PORT, '127.0.0.1', r));
 
-  const browser = await puppeteer.launch({
+  let browser;
+  const launch = () => puppeteer.launch({
     executablePath: CHROME,
     headless: 'shell',
     protocolTimeout: 900000,
@@ -91,19 +92,29 @@ const server = http.createServer((req, res) => {
       '--force-device-scale-factor=1'
     ]
   });
+  browser = await launch();
 
-  const page = await browser.newPage();
-  page.on('pageerror', e => console.error('[pageerror]', e.message));
-  page.on('console', m => {
-    const t = m.text();
-    if (!t.includes('THREE.WebGLRenderer') && !t.includes('GL Driver Message')) console.log('[page]', t);
-  });
+  // A long render leaks memory in the page (three.js holds every texture and
+  // geometry). Recycle the page every N frames instead of dying at frame 900.
+  const RECYCLE = parseInt(args.recycle || '60', 10);
+  let page = null, sinceRecycle = 0;
 
-  const size = (args.size || '1080x1920').split('x').map(Number);
-  await page.setViewport({ width: size[0], height: size[1], deviceScaleFactor: 1 });
-  await page.goto(`http://127.0.0.1:${PORT}/index.html?${QUERY}`, { waitUntil: 'load', timeout: 120000 });
-  await page.waitForFunction('window.sceneReady === true', { timeout: 180000 });
-
+  async function freshPage() {
+    if (page) { try { await page.close(); } catch (e) {} }
+    page = await browser.newPage();
+    page.on('pageerror', e => console.error('[pageerror]', e.message));
+    page.on('console', m => {
+      const t = m.text();
+      if (!t.includes('THREE.WebGLRenderer') && !t.includes('GL Driver Message')) console.log('[page]', t);
+    });
+    const size = (args.size || '1080x1920').split('x').map(Number);
+    await page.setViewport({ width: size[0], height: size[1], deviceScaleFactor: 1 });
+    await page.goto(`http://127.0.0.1:${PORT}/index.html { waitUntil: 'load', timeout: 120000 });
+    await page.waitForFunction('window.sceneReady === true', { timeout: 180000 });
+    sinceRecycle = 0;
+  }
+  await freshPage();
+  const _unusedPage = null;
   const total = await page.evaluate(() => window.TOTAL || 0);
   const TO = args.to !== undefined ? parseInt(args.to, 10) : total - 1;
   const seq = args.list
@@ -117,7 +128,21 @@ const server = http.createServer((req, res) => {
   for (const i of seq) {
     const file = path.join(OUT, `f${String(i).padStart(5, '0')}.jpg`);
     if (args.resume && fs.existsSync(file) && fs.statSync(file).size > 2000) continue;
-    const dataUrl = await page.evaluate(n => window.renderFrame(n), i);
+    if (sinceRecycle >= RECYCLE) await freshPage();
+    let dataUrl;
+    try {
+      dataUrl = await page.evaluate(n => window.renderFrame(n), i);
+    } catch (err) {
+      // The renderer process died (software WebGL runs out of memory on long
+      // films). Restart the browser and retry this frame once; a crash should
+      // cost one frame, not the whole render.
+      console.error(`  ! frame ${i} crashed (${String(err.message).slice(0, 60)}) — restarting`);
+      try { await browser.close(); } catch (e) {}
+      browser = await launch();
+      await freshPage();
+      dataUrl = await page.evaluate(n => window.renderFrame(n), i);
+    }
+    sinceRecycle++;
     fs.writeFileSync(file, Buffer.from(dataUrl.slice(dataUrl.indexOf(',') + 1), 'base64'));
     done++;
     if (done % 25 === 0) {
