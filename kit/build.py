@@ -30,6 +30,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KIT = os.path.join(ROOT, "kit")
 LIB = os.path.join(KIT, "lib")
 NODE = os.environ.get("NODE", "node")
+SCHEMA_VERSION = 1   # bump when film.json changes shape; refuse newer films
 QUERY = ""
 
 
@@ -195,6 +196,11 @@ def main() -> int:
     QUERY = args.query
 
     film = json.load(open(args.film, encoding="utf-8"))
+    schema = film.get("schema", 1)
+    if schema > SCHEMA_VERSION:
+        raise SystemExit(
+            f"{args.film} uses schema {schema}; this build understands up to {SCHEMA_VERSION}.\n"
+            "Update Reelwright rather than editing the film.")
     slug = film.get("slug") or os.path.splitext(os.path.basename(args.film))[0]
     build = os.path.abspath(args.build or os.path.join(ROOT, "build", slug))
     os.makedirs(build, exist_ok=True)
