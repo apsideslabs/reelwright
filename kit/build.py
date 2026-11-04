@@ -29,6 +29,8 @@ import time
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KIT = os.path.join(ROOT, "kit")
 LIB = os.path.join(KIT, "lib")
+NODE = os.environ.get("NODE", "node")
+QUERY = ""
 
 
 def run(cmd, **kw):
@@ -112,32 +114,59 @@ def step_site(film_path, build, film):
     print(f"  site: {site}  ({frames} frames, {timings['total']:.2f}s)")
 
 
-def step_render(build, film, chunk_seconds, port, extra):
+def step_render(build, film, chunk_seconds=280, workers=1):
+    """Render every frame. Resumable: a kill, a crash or a timeout just resumes."""
     site = os.path.join(build, "site")
-    out = os.path.join(build, "frames")
-    total = round(json.load(open(os.path.join(build, "timings.json")))["total"] * film.get("fps", 24))
-    os.makedirs(out, exist_ok=True)
+    frames = os.path.join(build, "frames")
+    os.makedirs(frames, exist_ok=True)
+    timings = json.load(open(os.path.join(build, "timings.json")))
+    total = int(round(timings["total"] * film["fps"]))
+    t0 = time.time()
 
     def have():
-        return len([f for f in os.listdir(out) if f.endswith(".jpg")])
+        return len([f for f in os.listdir(frames) if f.endswith(".jpg")])
 
-    started = time.time()
+    if workers <= 1:
+        while have() < total:
+            if time.time() - t0 > 6 * 3600:
+                raise SystemExit("render exceeded 6 hours; check the log")
+            before = have()
+            run([NODE, os.path.join(KIT, "render.js"), "--site", site, "--out", frames,
+                 "--from", "0", "--to", str(total - 1), "--resume", "--port", "8731",
+                 "--query", QUERY], check=False, timeout=chunk_seconds)
+            print(f"  render: {have()}/{total} frames")
+            if have() == before:
+                raise SystemExit("no progress — the scene is failing; run render.js --list=0 to see the error")
+        return
+
+    # parallel: split the frame range into contiguous slices, one browser each
+    print(f"  render: {workers} workers, {total} frames")
     while have() < total:
-        cmd = ["node", os.path.join(KIT, "render.js"),
-               "--site", site, "--out", out,
-               "--from", "0", "--to", str(total - 1),
-               "--port", str(port), "--resume"]
-        if extra:
-            cmd += ["--query", extra]
-        try:
-            subprocess.run(cmd, timeout=chunk_seconds, check=False)
-        except subprocess.TimeoutExpired:
-            pass
-        print(f"  render: {have()}/{total}")
-        if time.time() - started > 60 * 60 * 6:
-            print("  ! render exceeded 6h guard, stopping")
-            break
-    print(f"  render: {have()}/{total} frames")
+        if time.time() - t0 > 6 * 3600:
+            raise SystemExit("render exceeded 6 hours; check the log")
+        before = have()
+        per = (total + workers - 1) // workers
+        procs = []
+        for w in range(workers):
+            a = w * per
+            b = min(total - 1, a + per - 1)
+            if a >= total:
+                break
+            procs.append(subprocess.Popen(
+                [NODE, os.path.join(KIT, "render.js"), "--site", site, "--out", frames,
+                 "--from", str(a), "--to", str(b), "--resume", "--port", str(8731 + w),
+                 "--query", QUERY],
+                cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL))
+        deadline = time.time() + chunk_seconds
+        for pr in procs:
+            left = max(1, int(deadline - time.time()))
+            try:
+                pr.wait(timeout=left)
+            except subprocess.TimeoutExpired:
+                pr.kill()
+        print(f"  render: {have()}/{total} frames")
+        if have() == before:
+            raise SystemExit("no progress — the scene is failing; run render.js --list=0 to see the error")
 
 
 def step_encode(build, film, out_path):
@@ -150,16 +179,20 @@ def step_encode(build, film, out_path):
 
 # --------------------------------------------------------------------------- #
 def main() -> int:
+    global QUERY
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--film", required=True, help="path to film.json")
     ap.add_argument("--build", help="build directory (default build/<slug>)")
     ap.add_argument("--steps", default="voice,music,mix,site,render,encode,qa")
     ap.add_argument("--force", action="store_true", help="re-synthesise the voice")
     ap.add_argument("--chunk-seconds", type=int, default=280)
+    ap.add_argument("--workers", type=int, default=1,
+                    help="render N slices in parallel (use your core count; ~1 worker per 2 cores is fastest)")
     ap.add_argument("--port", type=int, default=8500)
     ap.add_argument("--query", default="", help="extra page query, e.g. w=540&h=960 for quick tests")
     ap.add_argument("--qa-ignore", default="", help="checks QA should tolerate, e.g. pops")
     args = ap.parse_args()
+    QUERY = args.query
 
     film = json.load(open(args.film, encoding="utf-8"))
     slug = film.get("slug") or os.path.splitext(os.path.basename(args.film))[0]
@@ -177,7 +210,7 @@ def main() -> int:
     if "site" in steps:
         step_site(args.film, build, film)
     if "render" in steps:
-        step_render(build, film, args.chunk_seconds, args.port, args.query)
+        step_render(build, film, args.chunk_seconds, args.workers)
     if "encode" in steps:
         step_encode(build, film, os.path.join(build, f"{slug}.mp4"))
     if "qa" in steps and os.path.exists(os.path.join(build, f"{slug}.mp4")):
