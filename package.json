@@ -9,7 +9,7 @@
     "build": "python3 kit/build.py"
   },
   "dependencies": {
-    "puppeteer-core": "^24.0.0"
+    "puppeteer-core": "^25.16.0"
   },
   "engines": { "node": ">=18" }
 }
