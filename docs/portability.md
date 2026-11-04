@@ -2,7 +2,7 @@
 
 Nobody can promise a piece of software will run unchanged in 50 years. Anyone who says otherwise is selling something. What you *can* engineer is **portability**: no lock-in, graceful degradation, and seams you can swap.
 
-That is what this page documents — the guarantees Reelwright actually makes, and what to do when a piece of the stack dies.
+That is what this page documents, the guarantees Reelwright actually makes, and what to do when a piece of the stack dies.
 
 ## The four seams
 
@@ -11,8 +11,8 @@ Everything here is a file on disk with a documented shape. Any one of them can b
 | Seam | Contract | Replace it with |
 |---|---|---|
 | **`film.json`** | plain JSON: lines, beats, graphics, music cues, grade | anything that writes the same JSON |
-| **`narration.wav` + `timings.json`** | 48 kHz audio, plus `{id: {start, dur}}` | any TTS — ElevenLabs, Azure, a human reading into a mic. `voice.py` is not privileged. |
-| **`scene.js` + `renderFrame(i)`** | a web page exposing `window.renderFrame(i)` that returns a JPEG data URL | a WebGPU renderer, a Blender pipeline, a canvas 2D animator — anything that renders frame *i* deterministically |
+| **`narration.wav` + `timings.json`** | 48 kHz audio, plus `{id: {start, dur}}` | any TTS, ElevenLabs, Azure, a human reading into a mic. `voice.py` is not privileged. |
+| **`scene.js` + `renderFrame(i)`** | a web page exposing `window.renderFrame(i)` that returns a JPEG data URL | a WebGPU renderer, a Blender pipeline, a canvas 2D animator, anything that renders frame *i* deterministically |
 | **frames + `mix.wav`** | numbered JPEGs and one audio track | ffmpeg is the encoder; `encode.py` is a thin wrapper |
 
 If three.js disappears tomorrow, you rewrite `scene.js` and keep `voice.py`, `mix.py`, `qa.py`, `build.py` and every film's `film.json`. That is the point of the seams.
@@ -21,13 +21,13 @@ If three.js disappears tomorrow, you rewrite `scene.js` and keep `voice.py`, `mi
 
 WebGL reaches the machine through ANGLE, and which backend ANGLE targets decides both speed and longevity. Reelwright tries these in order and keeps the first that works:
 
-1. **hardware** — real GPU: Metal on macOS, D3D11 on Windows, GL/Vulkan on Linux.
-2. **mesa** — `--use-angle=gl` → Mesa llvmpipe. On a CPU-only Linux box this is around 4× faster than SwiftShader, and it is not gated as unsafe upstream.
-3. **swiftshader** — Chromium's bundled software rasteriser. It is behind `--enable-unsafe-swiftshader` and is deprecated upstream, so it is the last resort, not the default.
+1. **hardware**, real GPU: Metal on macOS, D3D11 on Windows, GL/Vulkan on Linux.
+2. **mesa**, `--use-angle=gl` → Mesa llvmpipe. On a CPU-only Linux box this is around 4× faster than SwiftShader, and it is not gated as unsafe upstream.
+3. **swiftshader**, Chromium's bundled software rasteriser. It is behind `--enable-unsafe-swiftshader` and is deprecated upstream, so it is the last resort, not the default.
 
 The winner is cached in `.cache/backend.json` so later runs skip the failing attempts. Pin one with `--backend=hardware|mesa|swiftshader`, or `--gpu 0` to forbid hardware.
 
-This is the longevity design in miniature: **no single backend is load-bearing.** When SwiftShader is eventually removed, machines without a GPU fall through to Mesa; when Mesa's GL path changes, they fall through to whatever comes next — add it to `BACKENDS` in `kit/render.js` and the chain picks it up.
+This is the longevity design in miniature: **no single backend is load-bearing.** When SwiftShader is eventually removed, machines without a GPU fall through to Mesa; when Mesa's GL path changes, they fall through to whatever comes next, add it to `BACKENDS` in `kit/render.js` and the chain picks it up.
 
 ## Versioning
 
