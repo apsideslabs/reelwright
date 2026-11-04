@@ -31,10 +31,10 @@ scene.js      if (t < T.s5) return camLerp(...)
 
 ## Layers in the scene
 
-1. **Set** — static geometry, built once at load: shop, counter, shelves, street, houses
-2. **Cast** — cloned skinned meshes, posed per frame through bones
-3. **Camera** — keyed positions blended with easing
-4. **HUD** — Canvas 2D drawn *after* the 3D pass, in screen space
+1. **Set**, static geometry, built once at load: shop, counter, shelves, street, houses
+2. **Cast**, cloned skinned meshes, posed per frame through bones
+3. **Camera**, keyed positions blended with easing
+4. **HUD**, Canvas 2D drawn *after* the 3D pass, in screen space
 
 The HUD lives in 2D deliberately. 3D text under a 9:16 perspective gets cropped by tight framing and shears at the edges; a 2D pass is always crisp, always correctly placed, and free to render.
 
@@ -43,16 +43,16 @@ The HUD lives in 2D deliberately. 3D text under a 9:16 perspective gets cropped 
 ```
 update(t)            pose bones, place props, move camera
 renderer.render()    3D pass (WebGL)
-drawHUD(t, ctx2d)    2D pass — cards, captions, progress bar
+drawHUD(t, ctx2d)    2D pass, cards, captions, progress bar
 vignette + fade      Canvas 2D gradient, cheap
 canvas.toDataURL()   JPEG
 ```
 
-The JPEG goes back through Puppeteer as base64. Avoid `toDataURL` on the *WebGL* canvas — it is dramatically slower than reading from a 2D canvas that has copied it.
+The JPEG goes back through Puppeteer as base64. Avoid `toDataURL` on the *WebGL* canvas. It is dramatically slower than reading from a 2D canvas that has copied it.
 
 ## Why software rendering
 
-There is no GPU in a default container, so Chromium falls back to SwiftShader — correct output, slow. Two consequences drive the whole design:
+There is no GPU in a default container, so Chromium falls back to SwiftShader, correct output, slow. Two consequences drive the whole design:
 
 - **Resumability.** `render.js --resume` skips frames already on disk; `build.py` loops with a chunk timeout until all frames exist.
 - **Cheap effects.** Shadow maps and MSAA cost 35–50% of frame time; fake contact shadows and no MSAA cost almost nothing. A separate full-screen WebGL overlay pass cost a third of the budget, so the vignette moved to Canvas 2D.
