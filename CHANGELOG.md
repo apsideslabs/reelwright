@@ -2,6 +2,20 @@
 
 All notable changes to Reelwright. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning is [SemVer](https://semver.org/).
 
+## [2.0.0] — 2026-11-04
+
+First stable release. The film format is frozen at `schema: 1`; anything that changes it will ship with a migration.
+
+### Fixed
+- **`docs/film-format.md` was two versions stale.** It documented four fields out of twenty and would have misled anyone editing a film by hand. Rewritten as a complete reference: every field, its type, default and meaning, plus the graphics and `fx` tables.
+- `docs/customising.md` documented a build command missing the `mix` step, and predated `make.py`.
+- `.cache/` was not gitignored, so the renderer backend cache could be committed.
+- `films/kuch-bhi-kaise-bechein/timings.json` was committed. It is a build artefact that goes stale the moment the script changes — the exact failure the stale-cache guard exists to prevent. Removed; the voice step regenerates it.
+
+### Verified
+- `python kit/doctor.py` → 11 ok, 2 expected warnings (no GPU, headless), 0 failures.
+- `python kit/selftest.py` → 14/14 checks: voice, music, mix, site, render, encode, QA on a real three-line film.
+
 ## [1.7.0] — 2026-11-04
 
 ### Added
