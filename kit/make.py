@@ -103,7 +103,11 @@ def main() -> int:
     ap.add_argument("--lang", help="en, hi, es, fr, de, it, pt, ru, ar, zh, nl, pl, tr, vi")
     ap.add_argument("--voice", help="any Piper voice id, overrides --lang")
     ap.add_argument("--style", default="toon", choices=["toon", "real"])
-    ap.add_argument("--size", default="1080x1920", help="e.g. 720x1280 for a faster render")
+    ap.add_argument("--size", help="e.g. 720x1280 for a faster render")
+    ap.add_argument("--draft", action="store_true",
+                    help="fast preview: 540x960 at 20 fps (~4x faster, softer)")
+    ap.add_argument("--workers", type=int, default=1,
+                    help="parallel renders; helps only if you have spare cores (try 4 on an 8-core machine)")
     ap.add_argument("--fps", type=int, default=24)
     ap.add_argument("--title", help="title card text (default: first line)")
     ap.add_argument("--no-captions", action="store_true", help="burn no subtitles")
@@ -123,7 +127,10 @@ def main() -> int:
     lang = args.lang or guess_language(text)
     voice = args.voice or VOICES.get(lang, VOICES["en"])
     name = args.name or base or slugify(lines[0])
-    w, h = (int(x) for x in args.size.lower().split("x"))
+    size = args.size or ("540x960" if args.draft else "1080x1920")
+    if args.draft and args.fps == 24:
+        args.fps = 20
+    w, h = (int(x) for x in size.lower().split("x"))
 
     # ---- assemble a film ----
     ids = [f"l{i + 1}" for i in range(len(lines))]
@@ -176,6 +183,10 @@ def main() -> int:
     print(f"script   {len(lines)} line(s), {sum(len(l.split()) for l in lines)} words")
     print(f"voice    {voice}   ({lang})")
     print(f"look     {args.style}   {w}x{h} @ {args.fps}fps")
+    # measured on a 2-core CPU-only box; a GPU is 20-50x faster than this
+    rate = {1080: 2.5, 720: 1.2, 540: 0.8}.get(w, 2.5 * (w / 1080) ** 2)
+    est = len(lines) * 3.2 * args.fps * rate / 24
+    print(f"estimate about {est / 60:.0f} min to render (no GPU)")
     print(f"film     {os.path.relpath(film_path, ROOT)}")
 
     if args.dry_run:
@@ -184,7 +195,8 @@ def main() -> int:
 
     # ---- build it (fresh: the script may have changed since last time) ----
     shutil.rmtree(os.path.join(ROOT, "build", name), ignore_errors=True)
-    cmd = [sys.executable, os.path.join(KIT, "build.py"), "--film", film_path]
+    cmd = [sys.executable, os.path.join(KIT, "build.py"), "--film", film_path,
+           "--workers", str(args.workers)]
     rc = subprocess.run(cmd, cwd=ROOT).returncode
     if rc != 0:
         print("\nbuild failed — the log above says why. Common causes:")
