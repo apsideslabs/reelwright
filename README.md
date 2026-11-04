@@ -118,7 +118,7 @@ if (t < T.s3) return camLerp(K.wide, K.medium, easeInOut(seg(t, T.s2, T.s2 + 1.6
 
 ## The script format
 
-Everything a film needs lives in one file — narration, scene beats, on-screen text, music cues. Full reference in [`docs/film-format.md`](docs/film-format.md).
+Everything a film needs lives in one file — narration, scene beats, on-screen text, music cues. Full reference — every field, type and default — in [`docs/film-format.md`](docs/film-format.md). The format is frozen at `schema: 1`.
 
 ```jsonc
 {
