@@ -81,13 +81,22 @@ const server = http.createServer((req, res) => {
   await new Promise(r => server.listen(PORT, '127.0.0.1', r));
 
   let browser;
+  // Hardware GL when the machine has it: software rendering is 20-50x slower,
+  // so this is the biggest lever there is. --gpu=1 forces, --gpu=0 disables.
+  const hasDri = require('fs').existsSync('/dev/dri');
+  const GPU = args.gpu === '1' || (args.gpu !== '0' && hasDri);
+  const glFlags = GPU
+    ? ['--use-gl=angle', '--use-angle=default', '--ignore-gpu-blocklist', '--enable-gpu-rasterization']
+    : ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'];
+  console.log(`  renderer: ${GPU ? 'GPU (hardware)' : 'SwiftShader (software, CPU)'}`);
+
   const launch = () => puppeteer.launch({
     executablePath: CHROME,
     headless: 'shell',
     protocolTimeout: 900000,
     args: [
       '--no-sandbox',
-      '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader',
+      ...glFlags,
       '--disable-dev-shm-usage', '--hide-scrollbars', '--disable-lcd-text',
       '--force-device-scale-factor=1'
     ]
