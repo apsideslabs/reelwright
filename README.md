@@ -111,6 +111,14 @@ make doctor     # OS, GPU, backends, ffmpeg, voices, films
 
 [`docs/portability.md`](docs/portability.md) lists what is guaranteed and what isn't.
 
+## Captions
+
+Captions are on by default and follow the voice word by word: the word being spoken is highlighted in an accent colour, so a muted viewer still reads along. Word timings are derived from the narration audio rather than from a model's alignment pass, which is why they work for every language Piper supports.
+
+```jsonc
+{ "captions": true, "captionAccent": "#ffd45e" }
+```
+
 ## Quality checks
 
 `qa.py` decodes the finished MP4 at low resolution and reports black frames, blown frames, still runs, hard pops and loudness. It exits non-zero on failure, so CI can gate on it.
@@ -135,7 +143,7 @@ assets/         logo and banner
 
 ## Credits
 
-Built by [@apsideslabs](https://github.com/apsideslabs). Some techniques were adopted from [mromidev/claude-animated-shorts](https://github.com/mromidev/claude-animated-shorts) (MIT); [`CREDITS.md`](CREDITS.md) says which and why.
+Built by [@apsideslabs](https://github.com/apsideslabs). Some techniques were adopted from [mromidev/claude-animated-shorts](https://github.com/mromidev/claude-animated-shorts) (MIT). [`PROVENANCE.md`](PROVENANCE.md) lists exactly what came from where, what we changed, and what we deliberately did not take.
 
 Bundled assets: [three.js](https://threejs.org) (MIT), a Ready Player Me sample avatar, [Noto Sans Devanagari](https://fonts.google.com/noto) (OFL), [Piper](https://github.com/rhasspy/piper) voices. Licences in [`NOTICE.md`](NOTICE.md).
 
