@@ -40,8 +40,16 @@ def run(cmd, **kw):
 def step_voice(film_path, build, force):
     out = os.path.join(build, "timings.json")
     if os.path.exists(out) and not force:
-        print("  voice: cached (use --force to re-synthesise)")
-        return
+        # a stale cache is the single most confusing failure in this pipeline:
+        # the script changed, the timings did not, and beats point at lines that
+        # no longer exist. Re-synthesise whenever the line ids differ.
+        film = json.load(open(film_path, encoding="utf-8"))
+        cached = json.load(open(out)).get("lines", {})
+        want = [l["id"] for l in film.get("lines", [])]
+        if list(cached.keys()) == want:
+            print("  voice: cached (use --force to re-synthesise)")
+            return
+        print("  voice: script changed — re-synthesising")
     run([sys.executable, os.path.join(KIT, "voice.py"), "--film", film_path, "--out", build], check=True)
 
 
