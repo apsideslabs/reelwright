@@ -10,10 +10,12 @@ This copies `films/kuch-bhi-kaise-bechein/` to `films/my-film/`, rewrites the sl
 
 ## The script
 
+If you started from `python kit/make.py`, the film is already wired. Otherwise copy `templates/film.json` + `templates/scene.js` into `films/my-film/`.
+
 Edit `lines` in `film.json`. Keep ids stable if you want the staging to stay put; if you add lines, add matching `beats` entries. Then:
 
 ```bash
-python kit/build.py --film films/my-film/film.json --steps voice,music,site
+python kit/build.py --film films/my-film/film.json
 ```
 
 Re-run this every time you touch the script. It re-times everything and prints the new total.
