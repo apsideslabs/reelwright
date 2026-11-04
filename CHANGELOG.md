@@ -2,6 +2,13 @@
 
 Notable changes, newest first. Versioning is SemVer; the film format is frozen at `schema: 1`.
 
+## 2.1.0 (2026-11-04)
+
+- **Word-level timings.** `voice.py` writes `words.json`: every word with its line, start and end. Derived from the audio, so it works for any Piper language rather than depending on a model's alignment pass.
+- **Karaoke captions.** The word being spoken is highlighted in an accent colour. Configurable with `captionAccent`.
+- **`PROVENANCE.md`.** A full ledger: what is ours, what came from where, what changed, and what was deliberately not taken (the reference frames, which are a third party's work and marked private study by their own repository).
+- Fixed: word-by-word caption drawing inherited `textAlign: center`, so words were centred on their own x and collided. Left-aligned during the word pass.
+
 ## 2.0.1 (2026-11-04)
 
 Documentation pass. No behaviour changes.
