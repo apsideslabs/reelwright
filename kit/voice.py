@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import os
 import sys
 import wave
@@ -158,6 +159,40 @@ def main() -> int:
               open(os.path.join(args.out, "envelope.json"), "w"))
     json.dump({"total": round(duration, 3), "lines": timings},
               open(os.path.join(args.out, "timings.json"), "w"), indent=1)
+
+    # ---- word timings ----
+    # Piper returns phoneme alignments only for some voices, so words are spread
+    # across each line in proportion to their length and each boundary is then
+    # snapped to the quietest point nearby. Approximate by design: within about
+    # 100 ms, well inside what a caption can show. Used for karaoke captions.
+    words = []
+    for line in film["lines"]:
+        lid = line["id"]
+        if lid not in timings:
+            continue
+        start, dur = timings[lid]["start"], timings[lid]["dur"]
+        toks = [w for w in re.split(r"\s+", line["text"].strip()) if w]
+        if not toks:
+            continue
+        weights = [max(1, len(re.sub(r"[^\w\u0900-\u097F]", "", w))) for w in toks]
+        total_w = sum(weights)
+        seg = track[int(start * SR_OUT):int((start + dur) * SR_OUT)]
+        acc, w_start = 0, start
+        for i, (w, wt) in enumerate(zip(toks, weights)):
+            acc += wt
+            w_end = start + dur * acc / total_w
+            if 0 < i < len(toks) - 1 and len(seg) > 0:
+                guess = int((w_end - start) * SR_OUT)
+                lo, hi = max(0, guess - int(0.12 * SR_OUT)), min(len(seg), guess + int(0.12 * SR_OUT))
+                if hi - lo > 720:
+                    win = 480
+                    energies = [float(np.abs(seg[j:j + win]).mean()) for j in range(lo, hi - win, 240)]
+                    if energies:
+                        w_end = start + (lo + int(np.argmin(energies)) * 240 + win // 2) / SR_OUT
+            words.append({"line": lid, "w": w, "start": round(w_start, 3), "end": round(w_end, 3)})
+            w_start = w_end
+    json.dump(words, open(os.path.join(args.out, "words.json"), "w"), ensure_ascii=False)
+    print(f"  words.json     {len(words)} words")
 
     print(f"  total {duration:.2f}s  ->  {args.out}/narration.wav")
     return 0
