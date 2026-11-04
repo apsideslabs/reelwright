@@ -2,6 +2,18 @@
 
 All notable changes to Reelwright. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning is [SemVer](https://semver.org/).
 
+## [1.6.0] — 2026-11-04
+
+### Added
+- **GPU rendering, detected automatically.** `render.js` switches to hardware GL when `/dev/dri` exists, and prints which renderer it chose. `--gpu 1` / `--gpu 0` to force. Software rendering is the reason a minute of video takes an hour; hardware is 20–50× faster.
+- **`--draft`** in `make.py`: 540×960 at 20 fps, about 4× faster, for checking timing and wording.
+- **`--workers N`** parallel rendering for machines with spare cores.
+- **Render time estimate** printed before a build starts.
+- `docs/speed.md` — measured numbers and the levers, best first.
+
+### Changed
+- README performance table now carries measured figures instead of estimates.
+
 ## [1.5.0] — 2026-11-04
 
 ### Added
