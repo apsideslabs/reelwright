@@ -6,7 +6,7 @@
 ./new-film.sh my-film
 ```
 
-This copies `films/kuch-bhi-kaise-bechein/` to `films/my-film/`, rewrites the slug, and clears the generated build. You now have a working film — change it one thing at a time.
+This copies `films/kuch-bhi-kaise-bechein/` to `films/my-film/`, rewrites the slug, and clears the generated build. You now have a working film, change it one thing at a time.
 
 ## The script
 
@@ -34,7 +34,7 @@ const ravi = makeHuman({
 });
 ```
 
-Bones are driven directly — no animation files needed:
+Bones are driven directly, no animation files needed:
 
 ```js
 const POSE = {
@@ -56,7 +56,7 @@ speak(ravi, mouthAt(t));   // envelope generated from the narration
 
 ## Staging and camera
 
-`cameraAt(t)` returns `{p, l, fov}` — position, look-at, field of view. Keys are plain objects; blend between them with `camLerp`. Add a shot by adding a key and a branch:
+`cameraAt(t)` returns `{p, l, fov}`, position, look-at, field of view. Keys are plain objects; blend between them with `camLerp`. Add a shot by adding a key and a branch:
 
 ```js
 const K = {
@@ -66,11 +66,11 @@ const K = {
 if (t < T.s3) return camLerp(K.wide, K.medium, easeInOut(seg(t, T.s2, T.s2 + 1.6)));
 ```
 
-For 9:16, visible width is only 56% of visible height — a two-shot needs the camera much further back than instinct suggests. Rule of thumb: at field of view `f` and distance `d`, visible width ≈ `1.125 · d · tan(f/2)`.
+For 9:16, visible width is only 56% of visible height, a two-shot needs the camera much further back than instinct suggests. Rule of thumb: at field of view `f` and distance `d`, visible width ≈ `1.125 · d · tan(f/2)`.
 
 ## Graphics
 
-All HUD text comes from `film.json → graphics`. To change layout, edit `drawHUD()` in the scene — it is plain Canvas 2D, positioned in pixels for a 1080×1920 frame.
+All HUD text comes from `film.json → graphics`. To change layout, edit `drawHUD()` in the scene. It is plain Canvas 2D, positioned in pixels for a 1080×1920 frame.
 
 To use a different script, drop a font in `kit/lib/fonts/`, load it near the top of the scene, and change the `font` strings:
 
@@ -81,8 +81,8 @@ await deva.load(); document.fonts.add(deva);
 
 ## Look
 
-- `updateMood(t)` — time-of-day grading (sky colour, key light intensity and warmth)
-- `renderer.toneMappingExposure` — overall exposure
+- `updateMood(t)`, time-of-day grading (sky colour, key light intensity and warmth)
+- `renderer.toneMappingExposure`, overall exposure
 - The vignette is a Canvas 2D radial gradient in `renderFrame`, essentially free
 - Contact shadows are flat gradient planes; real shadow maps cost ~35% of render time on CPU
 
@@ -95,4 +95,4 @@ await deva.load(); document.fonts.add(deva);
 | shadows off | ~35% faster, needs fake contact shadows |
 | `antialias: false` | ~15% faster, slightly harder edges |
 
-Render time on a 2-core box: **~2–4 s per 1080×1920 frame**. A 60 s film at 24 fps is 1440 frames — budget 60–90 minutes.
+Render time on a 2-core box: **~2–4 s per 1080×1920 frame**. A 60 s film at 24 fps is 1440 frames, budget 60–90 minutes.
