@@ -293,6 +293,8 @@ nbAwn.position.set(-4.6, 2.4, -2.4); nbAwn.rotation.x = -0.18; nbAwn.rotation.y 
 const loader = new GLTFLoader();
 const gltf = await loader.loadAsync('./assets/readyplayer.me.glb');
 const envelope = await fetch('./envelope.json').then(r => r.json()).catch(() => ({ fps: 30, data: [] }));
+// word-level timings, if the voice step produced them (karaoke captions)
+const WORDS = await fetch('./words.json').then(r => r.json()).catch(() => null);
 
 const BONES = ['Hips', 'Spine', 'Spine1', 'Spine2', 'Neck', 'Head', 'LeftShoulder', 'LeftArm', 'LeftForeArm',
   'RightShoulder', 'RightArm', 'RightForeArm', 'LeftUpLeg', 'RightUpLeg', 'LeftLeg', 'RightLeg'];
@@ -765,12 +767,44 @@ function drawHUD(t, g) {
       const lh = size * 1.35;
       const blockH = lines.length * lh;
       const baseY = SAFE.y1 - blockH / 2 - 18;
+      const cx = (SAFE.x0 + SAFE.x1) / 2;
+      const accent = FILM.captionAccent || '#ffd45e';
+
+      // which word is being spoken right now (karaoke), if timings exist
+      const lineWords = WORDS ? WORDS.filter(w => w.line === cur[0]) : [];
+      let activeIdx = -1;
+      if (lineWords.length) {
+        activeIdx = lineWords.findIndex(w => t >= w.start && t < w.end);
+      }
+
+      let wordIdx = 0;
       lines.forEach((ln, i) => {
         const y = baseY + i * lh;
         g.lineWidth = size * 0.16; g.strokeStyle = 'rgba(8,10,16,0.92)';
-        g.strokeText(ln, (SAFE.x0 + SAFE.x1) / 2, y);
-        g.fillStyle = '#ffffff';
-        g.fillText(ln, (SAFE.x0 + SAFE.x1) / 2, y);
+        if (!lineWords.length) {
+          g.strokeText(ln, cx, y);
+          g.fillStyle = '#ffffff';
+          g.fillText(ln, cx, y);
+          return;
+        }
+        // draw this row word by word so one of them can be highlighted.
+        // textAlign must be left here, or every word is centred on its own x and
+        // they pile up on top of each other.
+        g.textAlign = 'left';
+        const ws = ln.split(' ');
+        const space = g.measureText(' ').width;
+        const widths = ws.map(w => g.measureText(w).width);
+        const rowW = widths.reduce((a, b) => a + b, 0) + space * (ws.length - 1);
+        let x = cx - rowW / 2;
+        ws.forEach((w, k) => {
+          const on = wordIdx === activeIdx;
+          g.strokeText(w, x, y);
+          g.fillStyle = on ? accent : '#ffffff';
+          g.fillText(w, x, y);
+          x += widths[k] + space;
+          wordIdx++;
+        });
+        g.textAlign = 'center';
       });
       g.restore();
     }
