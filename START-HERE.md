@@ -1,8 +1,10 @@
 # Start here
 
-You need: a computer, and words. No editing software, no accounts, no subscriptions.
+You need a computer and a script. No editing software, no accounts, no subscriptions.
 
-## 1. Install (once, about two minutes)
+## Install
+
+Once, from a terminal:
 
 ```bash
 git clone https://github.com/apsideslabs/reelwright
@@ -10,21 +12,21 @@ cd reelwright
 ./setup.sh
 ```
 
-`setup.sh` installs the Python and Node packages and tells you if Chromium is missing.
+`setup.sh` installs the Python and Node packages and tells you if Chromium is missing. If it is, install it from your package manager or chromium.org and run the script again.
 
-## 2. Make a video
+## Make a video
 
 ```bash
 python kit/make.py "Your first sentence. Your second sentence. And the last one."
 ```
 
-That's it. It writes a script file for you, picks a voice, adds captions, renders and encodes.
+That writes a script file, picks a voice, adds captions, renders and encodes. The result is `your-first-sentence.mp4`, 1080x1920, ready for Reels, Shorts or TikTok.
 
-Your video appears as `your-first-sentence.mp4` — 1080×1920, ready for Reels, Shorts or TikTok.
+It prints an estimate before it starts. On a laptop with no graphics card, expect roughly a minute of rendering per second of video at full size.
 
-## 3. Or write the script in a file
+## Or write the script in a file
 
-`myscript.txt`:
+Make `myscript.txt`:
 
 ```
 Everyone said the shop was finished.
@@ -36,33 +38,33 @@ What problem does it actually solve?
 python kit/make.py myscript.txt --name my-story
 ```
 
-One sentence per line is best: each line becomes one caption and one beat.
+One sentence per line works best: each line becomes one spoken clip, one caption and one beat.
 
-## 4. Options worth knowing
+## Options
 
-| flag | what it does |
+| Flag | What it does |
 |---|---|
-| `--lang hi` | speak Hindi (also `es fr de it pt ru ar zh` and more) |
+| `--lang hi` | speak Hindi (also es, fr, de, it, pt, ru, ar, zh and others) |
+| `--draft` | 540x960 at 20 fps, about four times faster, for checking wording |
 | `--style real` | lit look instead of flat cartoon |
-| `--size 720x1280` | render smaller — about twice as fast, good for a first try |
 | `--steps "Problem,Agitate,Solution,Proof,Offer,Close"` | adds a numbered checklist |
 | `--no-captions` | burn no subtitles |
 | `--title "My Film"` | title card text |
 | `--dry-run` | write the script file, render nothing |
 
-## 5. If something goes wrong
+## When something goes wrong
 
-- **"Chromium missing"** — install it, or run `CHROME=/path/to/chromium python kit/make.py ...`
-- **"No module named piper"** — `pip install -r requirements.txt`
-- **It is slow** — expected on a laptop without a GPU: 2–4 seconds per frame at 1080p. Try `--size 720x1280` first.
-- **Anything else** — `make test` runs the whole pipeline on a three-line film and tells you which stage is broken.
+- **Chromium missing.** Install it, or run `CHROME=/path/to/chromium python kit/make.py ...`
+- **No module named piper.** Run `pip install -r requirements.txt`.
+- **Slow.** Expected without a GPU. Try `--draft` first.
+- **Anything else.** Run `make doctor` for an environment report, or `make test` to check the pipeline on a three-line film. Both print what is broken.
 
 ## Going further
 
-The file `make.py` writes — `films/<name>/film.json` — is plain, readable JSON: lines, colours, music cues, captions, safe areas. Edit it and run:
+The file `make.py` writes is ordinary JSON: lines, colours, music cues, captions, safe areas. Edit it and rebuild:
 
 ```bash
-python kit/build.py --film films/<name>/film.json
+python kit/build.py --film films/my-story/film.json
 ```
 
-Everything is in [`docs/`](docs/): the film format, how to change the look, safe areas, and the measured craft targets.
+Everything else is in [`docs/`](docs/): the film format, how to change the look, safe areas, render speed.
