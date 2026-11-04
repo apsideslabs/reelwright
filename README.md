@@ -163,12 +163,15 @@ Check any frame with `?safe=1` on the render URL; details and the pixel table in
 
 ## Performance
 
-No GPU required — Chromium falls back to SwiftShader, which is correct but slow.
+No GPU required — Chromium falls back to SwiftShader, which is correct but slow. Measured on a 2-core, 2 GB, GPU-less box:
 
 | Resolution | Per frame | 60 s at 24 fps |
 |---|---|---|
-| 1080×1920 | ~2–4 s | 60–90 min |
-| 720×1280 | ~1–1.5 s | 25–35 min |
+| 1080×1920 | 2.5 s | ~60 min |
+| 720×1280 | 1.2 s | ~28 min |
+| 540×960 (`--draft`) | 0.8 s | ~19 min |
+
+**A GPU is 20–50× faster** and is detected automatically — the render log's first line tells you which path it took. Without one, `--draft` is the fast way to check timing and wording. Full breakdown, including why extra workers don't always help: [`docs/speed.md`](docs/speed.md).
 
 Rendering is **resumable**: `render.js --resume` skips frames already on disk, and `build.py` loops in chunks until the film is complete. Kill it, run it again, it continues. On a 2 GB box, `encode.py` pins x264 to one thread; without that it dies with *Cannot allocate memory*.
 
