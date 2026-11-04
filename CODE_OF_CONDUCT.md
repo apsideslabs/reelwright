@@ -22,7 +22,7 @@ Examples of unacceptable behaviour:
 
 ## Scope
 
-This applies in all project spaces — issues, pull requests, discussions — and when representing the project in public.
+This applies in all project spaces, issues, pull requests, discussions, and when representing the project in public.
 
 ## Enforcement
 
