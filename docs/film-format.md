@@ -1,6 +1,6 @@
 # film.json reference
 
-One file describes a film. Everything the build needs comes from here — narration, timing, on-screen graphics, the score, the grade and the look.
+One file describes a film. Everything the build needs comes from here, narration, timing, on-screen graphics, the score, the grade and the look.
 
 `kit/make.py` writes one for you; this page is what to edit afterwards, and what every field means.
 
@@ -26,7 +26,7 @@ One file describes a film. Everything the build needs comes from here — narrat
 }
 ```
 
-Every field except `lines` has a default. Unknown fields are ignored, so a newer film still builds on an older kit — until the `schema` says otherwise.
+Every field except `lines` has a default. Unknown fields are ignored, so a newer film still builds on an older kit, until the `schema` says otherwise.
 
 ## Top level
 
@@ -47,7 +47,7 @@ Every field except `lines` has a default. Unknown fields are ignored, so a newer
 | `captions` | bool | `true` | Burn the narration in as subtitles, word-wrapped inside the safe area. |
 | `captionSize` | number | `44` | Caption size in 1080×1920 units. |
 | `grade.exposure` | number | `1.28` | Renderer exposure. Raise until a mid-shot's luma sits near 0.5. |
-| `grade.lift` | `[r,g,b]` | `[35, 19, 20]` | Black point. Never `[0,0,0]` — crushed black reads as a dead pixel. |
+| `grade.lift` | `[r,g,b]` | `[35, 19, 20]` | Black point. Never `[0,0,0]`, crushed black reads as a dead pixel. |
 | `grade.vignette` | number | `0.42` | Corner darkening alpha. ~0.86 corner÷centre is the measured target. |
 
 ## Voice and pacing
@@ -79,7 +79,7 @@ Keep ids stable: `beats` reference them. If you add a line, add matching beats.
 
 ## `beats`
 
-Maps scene keys to lines. The scene reads `T.s2` … `T.s14` — a beat is simply *the moment this line starts*, so a film with three lines can map several beats to the same line.
+Maps scene keys to lines. The scene reads `T.s2` … `T.s14`, a beat is simply *the moment this line starts*, so a film with three lines can map several beats to the same line.
 
 ```jsonc
 "beats": { "s2": "l2", "s3": "l3", "s4": "l3" }
@@ -89,7 +89,7 @@ Maps scene keys to lines. The scene reads `T.s2` … `T.s14` — a beat is simpl
 
 ## `graphics`
 
-Every on-screen panel. Each block is optional — omit it and that panel simply never draws.
+Every on-screen panel. Each block is optional, omit it and that panel simply never draws.
 
 | Key | Fields | When it shows |
 |---|---|---|
@@ -116,16 +116,16 @@ Screen-space cartoon effects, anchored to a line id or beat key.
 
 | Field | Default | Meaning |
 |---|---|---|
-| `at` | — | line id or beat key |
+| `at` |, | line id or beat key |
 | `offset` | `0` | seconds after that anchor |
-| `kind` | — | `impact` (ring + ticks) or `sparkle` (radiating stars) |
+| `kind` |, | `impact` (ring + ticks) or `sparkle` (radiating stars) |
 | `x`, `y` | `0.5`, `0.45` | position as a fraction of the frame |
 | `dur` | `0.6` | seconds |
-| `count`, `scale`, `seed`, `color` | — | appearance |
+| `count`, `scale`, `seed`, `color` |, | appearance |
 
 ## `music`
 
-A score described as cues, synthesised from sine waves — no samples, no licensing.
+A score described as cues, synthesised from sine waves, no samples, no licensing.
 
 ```jsonc
 "music": {
