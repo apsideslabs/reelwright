@@ -2,6 +2,21 @@
 
 All notable changes to Reelwright. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning is [SemVer](https://semver.org/).
 
+## [1.5.0] — 2026-11-04
+
+### Added
+- **`kit/make.py` — the one command.** `python kit/make.py "your words"` writes the film, picks a voice for the language, turns on captions and builds it. No JSON, no JavaScript.
+- **`setup.sh`** — one-time install with a Chromium check.
+- **`START-HERE.md`** — the beginner path, five sections.
+- **Automatic captions** — every film gets the narration burned in, word-wrapped inside the safe area, with `"captions": false` to turn them off.
+- **`templates/scene.js`** — a default scene, so a new film needs no scene code at all.
+
+### Fixed
+- The HUD did not scale: rendering at 720×1280 (the documented fast path) drew titles outside their panels. The whole overlay now draws through a transform from a fixed 1080×1920 space.
+- Long titles overflow their card — text now auto-fits.
+- A changed script left a stale voice cache, so beats pointed at lines that no longer existed. The cache is now invalidated when the line ids differ.
+- Long renders died when the browser ran out of memory around frame 120–180. The page is now recycled every 60 frames, and a crash restarts the browser and retries the frame instead of failing the film.
+
 ## [1.4.0] — 2026-11-04
 
 ### Added
