@@ -36,6 +36,7 @@ Reelwright turns a written script into a narrated 9:16 film: a TTS voice measure
 - [Styles](#styles)
 - [Safe areas](#safe-areas)
 - [Performance](#performance)
+- [Portability](#portability)
 - [Quality control](#quality-control)
 - [Project layout](#project-layout)
 - [Craft rules](#craft-rules)
@@ -150,6 +151,18 @@ One flag changes the whole look:
 ```
 
 Toon mode swaps every material for `MeshToonMaterial` and renders through three.js's `OutlineEffect` — the flat-colour-plus-ink look most animated shorts are built from. Screen-space `fx` cues (`impact`, `sparkle`) punch beats on top. Details and tuning in [`docs/styles.md`](docs/styles.md).
+
+## Portability
+
+Nothing here is load-bearing on one vendor. The film is plain JSON; the voice is a `.wav` plus a timings file; the scene is a web page exposing `renderFrame(i)`; the encoder is ffmpeg. Any one can be replaced without touching the others — that is what makes it survive a library dying.
+
+Graphics backends are tried in order and fall back automatically: **hardware → Mesa llvmpipe → SwiftShader**, with the winner cached. SwiftShader is deprecated upstream, so it is the last resort rather than the only option.
+
+```bash
+make doctor     # OS, GPU, backends, ffmpeg, voices, films — before you wait an hour
+```
+
+Full guarantees, and the honest list of what is *not* guaranteed, in [`docs/portability.md`](docs/portability.md).
 
 ## Safe areas
 
