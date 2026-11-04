@@ -46,6 +46,7 @@ Every field except `lines` has a default. Unknown fields are ignored, so a newer
 | `safeArea` | `"all"` \| `"tiktok"` \| `"reels"` \| `"shorts"` \| `"none"` | `"all"` | Keeps graphics out of the platform UI. See [safe areas](safe-areas.md). |
 | `captions` | bool | `true` | Burn the narration in as subtitles, word-wrapped inside the safe area. |
 | `captionSize` | number | `44` | Caption size in 1080×1920 units. |
+| `captionAccent` | colour | `#ffd45e` | Colour of the word being spoken. |
 | `grade.exposure` | number | `1.28` | Renderer exposure. Raise until a mid-shot's luma sits near 0.5. |
 | `grade.lift` | `[r,g,b]` | `[35, 19, 20]` | Black point. Never `[0,0,0]`, crushed black reads as a dead pixel. |
 | `grade.vignette` | number | `0.42` | Corner darkening alpha. ~0.86 corner÷centre is the measured target. |
@@ -149,6 +150,16 @@ Instruments: `pad`, `pluck`, `bell`, `pop`, `whoosh`, `coin`. A cue fires at its
 | `duck_db` | `-3.5` | How far the score dips under speech. |
 
 The ducking envelope is measured from the narration itself, so it re-times when the script changes.
+
+## Word timings
+
+The voice step also writes `words.json`: one entry per word, with the line it belongs to and its start and end in seconds.
+
+```json
+[{ "line": "l1", "w": "Everyone", "start": 1.2, "end": 1.788 }]
+```
+
+Piper returns phoneme alignments only for some voices, so words are spread across each line in proportion to their length and every boundary is then snapped to the quietest point nearby. That puts each word within about 100 ms, which is well inside what a caption can show. The captions use it to highlight the word being spoken; you can use it for anything else that needs word timing.
 
 ## Validating
 
