@@ -16,7 +16,17 @@ jobs:
       - name: Python syntax
         run: python -m py_compile kit/*.py
       - name: JavaScript syntax
-        run: node --check kit/render.js
+        run: |
+          node --check kit/render.js
+          # scene files are ES modules; parse them as .mjs so --check does not
+          # treat `import` as a CommonJS syntax error
+          for f in $(ls kit/lib/*.js films/*/scene.js templates/scene.js 2>/dev/null); do
+            cp "$f" /tmp/check.mjs
+            node --check /tmp/check.mjs
+            echo "ok $f"
+          done
+      - name: build.py ships scene-kit.js
+        run: grep -q "scene-kit.js" kit/build.py
       - name: film.json files parse
         run: |
           python - <<'PY'
