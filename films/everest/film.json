@@ -1,0 +1,194 @@
+{
+  "schema": 1,
+  "slug": "the-mountain-nobody-saw",
+  "title": "The Mountain Nobody Saw",
+  "fps": 20,
+  "size": [
+    720,
+    1280
+  ],
+  "style": "real",
+  "safeArea": "all",
+  "captions": true,
+  "captionSize": 38,
+  "grade": {
+    "exposure": 1.12,
+    "lift": [
+      22,
+      16,
+      26
+    ],
+    "vignette": 0.34
+  },
+  "voice": {
+    "model": "en_US-lessac-medium",
+    "length_scale": 1.0,
+    "pitch": 0.98,
+    "gain": 0.86
+  },
+  "lead": 0.9,
+  "gap": 0.32,
+  "tail": 1.0,
+  "lines": [
+    {
+      "id": "l1",
+      "text": "In eighteen fifty-two, a clerk in Calcutta finished the sums that found the tallest mountain on Earth."
+    },
+    {
+      "id": "l2",
+      "text": "He never saw it."
+    },
+    {
+      "id": "l3",
+      "text": "The peak stood a hundred and eighty kilometres away, behind a closed border."
+    },
+    {
+      "id": "l4",
+      "text": "So they measured it without going there. With triangles."
+    },
+    {
+      "id": "l5",
+      "text": "Six observations, from plains barely sixty metres up. The air bent the light by six minutes of arc. The mountain was less than one."
+    },
+    {
+      "id": "l6",
+      "text": "Radhanath Sikdar took the mean. Twenty-nine thousand and two feet."
+    },
+    {
+      "id": "l7",
+      "text": "Waugh announced it in eighteen fifty-six. They named it Everest, after a man who never saw it."
+    },
+    {
+      "id": "l8",
+      "text": "It already had names. Chomolungma. Sagarmatha."
+    }
+  ],
+  "beats": {
+    "s2": "l2",
+    "s3": "l3",
+    "s4": "l4",
+    "s5": "l5",
+    "s6": "l6",
+    "s7": "l7",
+    "s8": "l8"
+  },
+  "graphics": {
+    "title": {
+      "heading": "THE MOUNTAIN NOBODY SAW",
+      "sub": "Calcutta · 1852",
+      "accent": "#e8b64c"
+    },
+    "steps": [
+      {
+        "n": "1",
+        "label": "TRIANGULATE",
+        "color": "#cfd8e3"
+      },
+      {
+        "n": "2",
+        "label": "READ THE ANGLE",
+        "color": "#cfd8e3"
+      },
+      {
+        "n": "3",
+        "label": "CORRECT FOR AIR",
+        "color": "#cfd8e3"
+      },
+      {
+        "n": "4",
+        "label": "SIX OBSERVATIONS",
+        "color": "#cfd8e3"
+      },
+      {
+        "n": "5",
+        "label": "28,990 – 29,026 FT",
+        "color": "#e8b64c"
+      },
+      {
+        "n": "6",
+        "label": "TAKE THE MEAN",
+        "color": "#e8b64c"
+      }
+    ],
+    "proof": {
+      "stars": 0,
+      "lines": [
+        "29,002 FT",
+        "mean of six observations"
+      ],
+      "foot": "8,840 m · 1852",
+      "accent": "#e8b64c"
+    },
+    "end": {
+      "line1": "CHOMOLUNGMA",
+      "line2": "SAGARMATHA",
+      "foot": "named Everest, 1865",
+      "accent": "#e8b64c"
+    }
+  },
+  "music": {
+    "bed_gain": 0.34,
+    "cues": [
+      {
+        "at": "l1",
+        "inst": "pad",
+        "note": "C3",
+        "dur": 10
+      },
+      {
+        "at": "l1",
+        "inst": "pluck",
+        "every": 1.1,
+        "count": 7,
+        "notes": [
+          "C4",
+          "E4",
+          "G4",
+          "B4",
+          "G4",
+          "E4"
+        ]
+      },
+      {
+        "at": "l4",
+        "inst": "pad",
+        "note": "A2",
+        "dur": 9
+      },
+      {
+        "at": "l5",
+        "inst": "pad",
+        "note": "F2",
+        "dur": 8
+      },
+      {
+        "at": "l6",
+        "inst": "bell",
+        "offset": 0.1,
+        "note": "C5"
+      },
+      {
+        "at": "l6",
+        "inst": "coin",
+        "offset": 0.55
+      },
+      {
+        "at": "l7",
+        "inst": "pad",
+        "note": "G2",
+        "dur": 8
+      },
+      {
+        "at": "l8",
+        "inst": "bell",
+        "offset": 0.2,
+        "note": "C4"
+      }
+    ]
+  },
+  "audio": {
+    "target_lufs": -14,
+    "ceiling_dbtp": -1.5,
+    "duck_db": -3.5
+  }
+}
