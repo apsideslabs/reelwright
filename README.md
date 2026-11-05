@@ -119,6 +119,38 @@ Captions are on by default and follow the voice word by word: the word being spo
 { "captions": true, "captionAccent": "#ffd45e" }
 ```
 
+## Scenes, cast and lights
+
+A film can cut between locations. `kit/lib/scene-kit.js` provides the pieces a
+`scene.js` used to re-invent: a stage manager, a poseable cast, a lighting rig,
+set geometry helpers and the HUD.
+
+```js
+import * as K from './scene-kit.js';
+
+const app = K.createApp({ w: 1080, h: 1920, shadows: true });
+const rig = await K.loadRig('./assets/readyplayer.me.glb');
+
+const stages = K.createStages(app.scene, [
+  { key: 'office', t0: -1,   t1: T.s3, build: office },   // cut on a measured beat
+  { key: 'plain',  t0: T.s3, t1: T.s7, build: plain }
+]);
+
+const clerk = K.makeHuman(rig, { height: 1.70, top: 0x35507a, skin: 0x9a7150 });
+K.poseHuman(clerk, K.POSE.write);
+K.speak(clerk, K.mouthAt(envelope, t));   // mouth follows the narration envelope
+```
+
+Each stage owns a group, a camera path and optionally its own lights, so five
+locations in one film is a list of five entries rather than five engines. Inside a
+stage, `shotPicker` cuts between camera setups (wide, close-up, low angle), and
+`walkCycle`, `headLook`, `motes`, `snowfall` and `handheld` keep the frame moving. Full
+reference in [`docs/scene-kit.md`](docs/scene-kit.md).
+
+What it deliberately does not do: no walk cycles, no IK, no facial animation
+beyond the mouth, hard cuts only (no dissolves), and one rig recoloured per
+character.
+
 ## Quality checks
 
 `qa.py` decodes the finished MP4 at low resolution and reports black frames, blown frames, still runs, hard pops and loudness. It exits non-zero on failure, so CI can gate on it.
@@ -134,10 +166,10 @@ integrated loudness -14.2 LUFS · true peak -1.6 dBTP
 
 ```
 kit/            voice, music, mix, render, encode, qa, doctor, build, make
-kit/lib/        three.js, loaders, OutlineEffect, Devanagari font, rigged avatar
-films/          one directory per film: film.json and scene.js
+kit/lib/        three.js, loaders, scene-kit, OutlineEffect, Devanagari font, rigged avatar
+films/          one directory per film: film.json and scene.js (built on scene-kit)
 templates/      starter film.json, scene.js and index.html
-docs/           format reference, styles, safe areas, speed, portability, qa
+docs/           format reference, scene-kit, styles, safe areas, speed, portability, qa
 assets/         logo and banner
 ```
 

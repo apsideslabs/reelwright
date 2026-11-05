@@ -82,10 +82,8 @@ def step_site(film_path, build, film):
     shutil.copy2(os.path.join(film_dir, "scene.js"), os.path.join(site, "scene.js"))
     shutil.copy2(os.path.join(ROOT, "templates", "index.html"), os.path.join(site, "index.html"))
     shutil.copy2(os.path.join(build, "envelope.json"), os.path.join(site, "envelope.json"))
-    if os.path.exists(os.path.join(build, "words.json")):
-        shutil.copy2(os.path.join(build, "words.json"), os.path.join(site, "words.json"))
 
-    for item in ("three.module.js", "jsm", "fonts", "assets"):
+    for item in ("three.module.js", "scene-kit.js", "jsm", "fonts", "assets"):
         src, dst = os.path.join(LIB, item), os.path.join(site, item)
         if os.path.isdir(src):
             shutil.copytree(src, dst, dirs_exist_ok=True)

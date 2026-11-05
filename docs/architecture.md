@@ -9,7 +9,7 @@ kit/build.py ──► build/<slug>/site/
                    timeline.js   generated: FPS, DUR, T{}, LINES{}
                    film.js       generated: the whole film.json as FILM
                    envelope.json generated
-                   three.module.js, jsm/, fonts/, assets/   from kit/lib/
+                   three.module.js, scene-kit.js, jsm/, fonts/, assets/   from kit/lib/
 
 kit/render.js ──► build/<slug>/frames/f00000.jpg …
 kit/encode.py ──► build/<slug>/<slug>.mp4
@@ -29,19 +29,26 @@ timeline.js   export const T = { s5: 29.15, ... }
 scene.js      if (t < T.s5) return camLerp(...)
 ```
 
-## Layers in the scene
+## Layers in a film
 
-1. **Set**, static geometry, built once at load: shop, counter, shelves, street, houses
-2. **Cast**, cloned skinned meshes, posed per frame through bones
-3. **Camera**, keyed positions blended with easing
-4. **HUD**, Canvas 2D drawn *after* the 3D pass, in screen space
+1. **Stages**, one per location: a group of static geometry with its own lights and
+   its own camera path. Only one is visible at a time, so moving between locations
+   is a visibility change rather than a reload. Built with `kit/lib/scene-kit.js`.
+2. **Shots**, inside a stage: `shotPicker` selects the active camera setup — wide,
+   close-up, low angle — and runs its move, so a location is not one locked-off
+   camera for its whole duration.
+3. **Cast**, cloned skinned meshes from one GLB, posed per frame through bones,
+   walking with `walkCycle` and speaking with `mouthAt` off `envelope.json`.
+4. **Life**, dust motes, snow, drifting far clouds and a few tenths of a degree of
+   handheld camera drift, so no frame reads as a still.
+5. **HUD**, Canvas 2D drawn *after* the 3D pass, in screen space.
 
 The HUD lives in 2D deliberately. 3D text under a 9:16 perspective gets cropped by tight framing and shears at the edges; a 2D pass is always crisp, always correctly placed, and free to render.
 
 ## Per-frame pipeline
 
 ```
-update(t)            pose bones, place props, move camera
+stages.update(t)     pick the stage and the shot, pose bones, move camera
 renderer.render()    3D pass (WebGL)
 drawHUD(t, ctx2d)    2D pass, cards, captions, progress bar
 vignette + fade      Canvas 2D gradient, cheap
