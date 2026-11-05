@@ -59,6 +59,14 @@ One sentence per line works best: each line becomes one spoken clip, one caption
 - **Slow.** Expected without a GPU. Try `--draft` first.
 - **Anything else.** Run `make doctor` for an environment report, or `make test` to check the pipeline on a three-line film. Both print what is broken.
 
+
+## More than one set
+
+`make.py` writes a single-set film. If your story moves between places, write the
+stages yourself with `kit/lib/scene-kit.js` — each stage is a set, a camera path
+and its own lights, cut on a measured beat. See
+[`docs/scene-kit.md`](docs/scene-kit.md).
+
 ## Going further
 
 The file `make.py` writes is ordinary JSON: lines, colours, music cues, captions, safe areas. Edit it and rebuild:
