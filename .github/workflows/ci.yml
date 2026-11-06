@@ -14,13 +14,13 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: "20" }
       - name: Python syntax
-        run: python -m py_compile kit/*.py
+        run: python -m py_compile kit/*.py reference/src/*.py
       - name: JavaScript syntax
         run: |
           node --check kit/render.js
           # scene files are ES modules; parse them as .mjs so --check does not
           # treat `import` as a CommonJS syntax error
-          for f in $(ls kit/lib/*.js films/*/scene.js templates/scene.js 2>/dev/null); do
+          for f in $(ls kit/lib/*.js films/*/scene.js templates/scene.js reference/src/scene.js 2>/dev/null); do
             cp "$f" /tmp/check.mjs
             node --check /tmp/check.mjs
             echo "ok $f"

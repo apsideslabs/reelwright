@@ -8,3 +8,8 @@ __pycache__/
 *.pyc
 .DS_Store
 .cache/
+frames/
+voice/
+reference/frames/
+reference/voice/
+reference/audio/

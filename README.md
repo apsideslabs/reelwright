@@ -162,12 +162,25 @@ integrated loudness -14.2 LUFS · true peak -1.6 dBTP
 
 `make test` builds a three-line film end to end in about two minutes and asserts fourteen things about the result. See [`docs/qa.md`](docs/qa.md).
 
+## Two worked examples
+
+| Folder | Engine | Timing source | Film |
+|---|---|---|---|
+| `films/everest` | three.js | Piper line alignments | The Mountain Nobody Saw, 36.6 s |
+| `films/kuch-bhi-kaise-bechein` | three.js | Piper line alignments | the Hindi shop explainer, 85 s |
+| `reference/` | Babylon.js | edge-tts word boundaries | Slow as Molasses, 56.6 s |
+
+`reference/` sits outside `kit/` on purpose. It is the same script-to-frames contract
+with a second renderer and a second timing source — word-level rather than line-level —
+and it has its own build steps in [`reference/README.md`](reference/README.md).
+
 ## Layout
 
 ```
 kit/            voice, music, mix, render, encode, qa, doctor, build, make
 kit/lib/        three.js, loaders, scene-kit, OutlineEffect, Devanagari font, rigged avatar
 films/          one directory per film: film.json and scene.js (built on scene-kit)
+reference/      a second worked example: Babylon.js, word-level timing
 templates/      starter film.json, scene.js and index.html
 docs/           format reference, scene-kit, styles, safe areas, speed, portability, qa
 assets/         logo and banner
