@@ -6,9 +6,9 @@
 
 A tool for making vertical explainer videos from a text file. It generates the narration, the music, the character animation, the on-screen graphics and the frames, then encodes an MP4.
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-e8b64c.svg
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776ab.svg
-[![Node 18+](https://img.shields.io/badge/node-18%2B-339933.svg
+[![License: MIT](https://img.shields.io/badge/license-MIT-e8b64c.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776ab.svg)](https://www.python.org/)
+[![Node 18+](https://img.shields.io/badge/node-18%2B-339933.svg)](https://nodejs.org/)
 
 </div>
 
