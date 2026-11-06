@@ -149,7 +149,9 @@ reference in [`docs/scene-kit.md`](docs/scene-kit.md).
 
 What it deliberately does not do: no walk cycles, no IK, no facial animation
 beyond the mouth, hard cuts only (no dissolves), and one rig recoloured per
-character.
+character. The full scope — what needs code, the quality ceiling, measured render
+times, and when a different tool is the right answer — is in
+[`docs/limits.md`](docs/limits.md).
 
 ## Quality checks
 
