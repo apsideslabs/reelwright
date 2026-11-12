@@ -108,13 +108,20 @@ def main() -> int:
     lead = float(film.get("lead", 1.3))
     tail = float(film.get("tail", 1.2))
 
-    onnx = download_voice(model, args.voices)
-
     from piper import PiperVoice
     from piper.config import SynthesisConfig
 
-    print(f"  voice: {model}")
-    voice = PiperVoice.load(onnx, config_path=onnx + ".json")
+    # One film can have several speakers: a line may name its own "voice".
+    # Models are loaded once each and reused.
+    _loaded = {}
+
+    def voice_for(model_id):
+        if model_id not in _loaded:
+            onnx_path = download_voice(model_id, args.voices)
+            _loaded[model_id] = PiperVoice.load(onnx_path, config_path=onnx_path + ".json")
+        return _loaded[model_id]
+
+    print(f"  voices: {model}" + (" + per-line" if any(l.get('voice') for l in film['lines']) else ""))
     cfg = SynthesisConfig(
         length_scale=float(vc.get("length_scale", 1.0)),
         noise_scale=float(vc.get("noise_scale", 0.667)),
@@ -126,7 +133,7 @@ def main() -> int:
     total = lead
 
     for line in film["lines"]:
-        audio = synthesise(line["text"], voice, cfg, float(vc.get("pitch", 1.0)))
+        audio = synthesise(line["text"], voice_for(line.get("voice") or model), cfg, float(line.get("pitch", vc.get("pitch", 1.0))))
         audio = audio / (np.max(np.abs(audio)) + 1e-9) * float(vc.get("gain", 0.85))
         timings[line["id"]] = {"start": round(total, 3), "dur": round(len(audio) / SR_OUT, 3)}
         clips.append((total, audio))
